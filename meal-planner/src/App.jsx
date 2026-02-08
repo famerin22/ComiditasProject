@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Utensils, ShoppingCart, User } from 'lucide-react';
+import DayRow from './DayRow';
 
 const DAYS = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'];
 
@@ -47,7 +48,7 @@ const updateMeal = (person, day, time, value) => {
         {/* FER'S COLUMN */}
         <div className="space-y-4">
           <h2 className="text-xl font-bold flex items-center gap-2 text-blue-600">
-            <User /> Agenda de Fer
+            <User /> Fer
           </h2>
           {DAYS.map(day => (
             <DayRow 
@@ -62,7 +63,7 @@ const updateMeal = (person, day, time, value) => {
         {/* MELI'S COLUMN */}
         <div className="space-y-4">
           <h2 className="text-xl font-bold flex items-center gap-2 text-pink-600">
-            <User /> Agenda de Meli
+            <User /> Meli
           </h2>
           {DAYS.map(day => (
             <DayRow 
