@@ -17,62 +17,65 @@ const [schedules, setSchedules] = useState({
     // ... rest of the week
   }
 });
+const updateMeal = (person, day, time, value) => {
+    setSchedules(prev => ({
+      ...prev,
+      [person]: {
+        ...prev[person],
+        [day]: {
+          ...prev[person][day],
+          [time]: value
+        }
+      }
+    }));
+  };
+ return (
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+      {/* Header */}
+      <header className="flex items-center justify-between mb-8 bg-white p-6 rounded-xl shadow-sm">
+        <h1 className="text-3xl font-black text-slate-800 flex items-center gap-2">
+          <Utensils className="text-orange-500" /> MealPlan Pro
+        </h1>
+        <button className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-orange-600 transition">
+          <ShoppingCart size={20} /> Ver Lista de Compras
+        </button>
+      </header>
 
-  // 2. Mock Database (This would come from Supabase later)
-  const recipes = {
-    "Fideos con Pollo": [
-      { name: "fideos", amount: 100, is_buyable: true },
-      { name: "pechuga", amount: 150, is_buyable: true }
-    ],
-    "Sanguches de Miga": [
-      { name: "pan", amount: 2, is_buyable: false } // Miga isn't on the list!
-    ]
-  }
-
-  // 3. The "Shopping List" Logic (Your PhD Brain in JS)
-  const generateShoppingList = () => {
-    const totals = {}
-
-    Object.values(schedule).forEach(day => {
-      Object.values(day).forEach(mealName => {
-        const components = recipes[mealName] || [{ name: mealName, amount: 200, is_buyable: true }]
+      {/* Main Dashboard Grid */}
+      <div className="grid md:grid-cols-2 gap-8">
         
-        components.forEach(item => {
-          if (!item.is_buyable) return // THE "MIGA" SKIP LOGIC
-          totals[item.name] = (totals[item.name] || 0) + item.amount
-        })
-      })
-    })
-    return totals
-  }
+        {/* FER'S COLUMN */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold flex items-center gap-2 text-blue-600">
+            <User /> Agenda de Fer
+          </h2>
+          {DAYS.map(day => (
+            <DayRow 
+              key={day} 
+              day={day} 
+              data={schedules.fer[day] || {}} 
+              onChange={(time, val) => updateMeal('fer', day, time, val)} 
+            />
+          ))}
+        </div>
 
-  const shoppingList = generateShoppingList()
+        {/* MELI'S COLUMN */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold flex items-center gap-2 text-pink-600">
+            <User /> Agenda de Meli
+          </h2>
+          {DAYS.map(day => (
+            <DayRow 
+              key={day} 
+              day={day} 
+              data={schedules.meli[day] || {}} 
+              onChange={(time, val) => updateMeal('meli', day, time, val)} 
+            />
+          ))}
+        </div>
 
-  return (
-    <div className="p-8 font-sans">
-      <h1 className="text-2xl font-bold mb-4">Planificador de Comidas</h1>
-      
-      {/* 4. The Schedule View */}
-      <div className="grid grid-cols-2 gap-4">
-        {Object.entries(schedule).map(([day, meals]) => (
-          <div key={day} className="border p-4 rounded shadow">
-            <h3 className="font-bold border-b mb-2">{day}</h3>
-            <p>Lunch: {meals.almuerzo}</p>
-            <p>Dinner: {meals.cena}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* 5. The Live Shopping List */}
-      <div className="mt-8 p-4 bg-gray-100 rounded">
-        <h2 className="text-xl font-bold mb-2">Lista de Compras</h2>
-        {Object.entries(shoppingList).map(([item, amount]) => (
-          <div key={item} className="flex justify-between border-b py-1">
-            <span>{item}</span>
-            <span>{amount}g</span>
-          </div>
-        ))}
       </div>
     </div>
-  )
+  );
 }
+
