@@ -1,31 +1,30 @@
 import React from 'react';
+import MealPicker from './MealPicker';
 
 // We destructure the props here for cleaner code
-export default function DayRow({ day, data, onChange }) {
+export default function DayRow({ day, data, options, onChange, onRequestAddFoods }) {
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100 grid grid-cols-3 items-center gap-4 hover:border-orange-200 transition-colors">
-      
-      {/* 1. The Label */}
-      <span className="font-bold text-slate-500 text-sm uppercase tracking-wider">
+    <div style={{ background: 'white', padding: 16, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)', border: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <h3 style={{ fontWeight: 900, color: '#334155', borderBottom: '1px solid #f1f5f9', paddingBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         {day}
-      </span>
-
-      {/* 2. Almuerzo Input */}
-      <input 
-        className="border border-slate-200 p-2 rounded text-sm focus:ring-2 focus:ring-orange-200 outline-none transition-all"
-        placeholder="Almuerzo"
-        value={data.almuerzo || ""}
-        onChange={(e) => onChange('almuerzo', e.target.value)}
-      />
-
-      {/* 3. Cena Input */}
-      <input 
-        className="border border-slate-200 p-2 rounded text-sm focus:ring-2 focus:ring-orange-200 outline-none transition-all"
-        placeholder="Cena"
-        value={data.cena || ""}
-        onChange={(e) => onChange('cena', e.target.value)}
-      />
+      </h3>
       
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <MealPicker 
+          label="Almuerzo"
+          value={data.almuerzo || ""}
+          options={options}
+          onChange={(val) => onChange('almuerzo', val)}
+          onRequestAddFoods={(opt) => onRequestAddFoods && onRequestAddFoods('almuerzo', opt)}
+        />
+        <MealPicker 
+          label="Cena"
+          value={data.cena || ""}
+          options={options}
+          onChange={(val) => onChange('cena', val)}
+          onRequestAddFoods={(opt) => onRequestAddFoods && onRequestAddFoods('cena', opt)}
+        />
+      </div>
     </div>
   );
 }

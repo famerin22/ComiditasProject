@@ -1,26 +1,30 @@
 import React from 'react';
 
-export default function MealPicker({ label, value, options, onChange }) {
+export default function MealPicker({ label, value, options = [], onChange, onRequestAddFoods }) {
+  const handleChange = (e) => {
+    const val = e.target.value;
+    const opt = options.find(o => o.name === val);
+    if (opt && opt.is_recipe && typeof onRequestAddFoods === 'function') {
+      onRequestAddFoods(opt);
+    } else {
+      onChange(val);
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-1 w-full">
-      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
+      <label style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginLeft: 4 }}>
         {label}
       </label>
-      <select 
-        value={value} 
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm shadow-sm focus:ring-2 focus:ring-orange-200 outline-none appearance-none cursor-pointer hover:border-orange-300 transition-all"
-      >
+      <select value={value} onChange={handleChange} style={{ width: '100%', background: 'white', border: '1px solid #e2e8f0', borderRadius: 8, padding: 8 }}>
         <option value="">— Nada seleccionado —</option>
-        
-        {/* We group options to make it easier to find Recipes vs Ingredients */}
-        <optgroup label="Recetas (Moléculas)">
+        <optgroup label="Recetas">
           {options.filter(opt => opt.is_recipe).map(opt => (
             <option key={opt.id} value={opt.name}>{opt.name}</option>
           ))}
         </optgroup>
 
-        <optgroup label="Ingredientes (Átomos)">
+        <optgroup label="Ingredientes">
           {options.filter(opt => !opt.is_recipe).map(opt => (
             <option key={opt.id} value={opt.name}>{opt.name}</option>
           ))}
