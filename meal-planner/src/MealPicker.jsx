@@ -16,7 +16,7 @@ export default function MealPicker({ label, value, options = [], onChange, onReq
       <label style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginLeft: 4 }}>
         {label}
       </label>
-      <select value={value} onChange={handleChange} style={{ width: '100%', background: 'white', border: '1px solid #e2e8f0', borderRadius: 8, padding: 8 }}>
+      <select value={value} onChange={handleChange} style={{ width: '100%', background: 'white', border: '2px solid #cbd5e1', borderRadius: 8, padding: 8, color: '#000', fontSize: 14, fontFamily: 'inherit', cursor: 'pointer' }}>
         <option value="">— Nada seleccionado —</option>
         <optgroup label="Recetas">
           {options.filter(opt => opt.is_recipe).map(opt => (
