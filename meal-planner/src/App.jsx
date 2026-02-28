@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Utensils, ShoppingCart, User } from 'lucide-react';
 import DayRow from './DayRow';
-import MOCK_DB from './mockDb';
+import MOCK_DB, { getFoods } from './mockDb';
 import FoodModal from './FoodModal';
+import FoodManager from './FoodManager';
 
 const DAYS = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'];
 
@@ -29,8 +30,8 @@ const updateMeal = (person, day, time, value) => {
   };
 
  useEffect(() => {
-   // load mock DB into options for demonstration
-   setDbOptions(MOCK_DB);
+   // load initial foods
+   setDbOptions(getFoods());
  }, []);
 
  const openFoodModal = (person, day, time, option) => {
@@ -42,7 +43,16 @@ const updateMeal = (person, day, time, value) => {
    if (!modalContext) return;
    const { person, day, time, option } = modalContext;
    const names = selectedItems.map(i => i.name);
-   const newVal = option ? `${option.name} — ${names.join(', ')}` : names.join(', ');
+   
+   let newVal;
+   if (option && option.is_recipe) {
+     newVal = names.length > 0 
+       ? `${option.name} (${names.join(', ')})` 
+       : option.name;
+   } else {
+     newVal = names.join(', ');
+   }
+
    updateMeal(person, day, time, newVal);
    setModalOpen(false);
    setModalContext(null);
@@ -97,6 +107,9 @@ const updateMeal = (person, day, time, value) => {
         </div>
 
       </div>
+
+      <FoodManager onDatabaseChange={setDbOptions} />
+      
       <FoodModal open={modalOpen} onClose={() => setModalOpen(false)} items={dbOptions.filter(i => !i.is_recipe)} onAdd={handleAddFoods} />
     </div>
   );
