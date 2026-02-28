@@ -53,24 +53,25 @@ export default function FoodManager({ onDatabaseChange }) {
   );
 
   return (
-    <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'center' }}>
+    <>
       <button 
         onClick={() => setShowMainModal(true)}
         style={{ 
           display: 'flex', 
           alignItems: 'center', 
           gap: '8px', 
-          padding: '12px 24px', 
+          padding: '10px 16px', 
           backgroundColor: 'var(--bg-card)', 
           color: 'var(--text-main)', 
           border: '1px solid var(--border-color)', 
-          borderRadius: '12px', 
+          borderRadius: '8px', 
           cursor: 'pointer',
           fontWeight: 'bold',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
+          transition: '0.2s'
         }}
+        title="Gestionar Base de Datos de Alimentos"
       >
-        <Database size={20} /> Gestionar Base de Datos de Alimentos
+        <Database size={18} /> <span style={{ fontSize: '14px' }}>Gestionar Alimentos</span>
       </button>
 
       {showMainModal && (
@@ -161,6 +162,6 @@ export default function FoodManager({ onDatabaseChange }) {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

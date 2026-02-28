@@ -118,6 +118,9 @@ export default function App() {
           >
             {darkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
+          
+          <FoodManager onDatabaseChange={setDbOptions} />
+
           <button style={{ padding: '10px 20px', backgroundColor: '#ff6b35', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShoppingCart size={20} /> Ver Lista de Compras
           </button>
@@ -159,8 +162,6 @@ export default function App() {
           ))}
         </div>
       </div>
-
-      <FoodManager onDatabaseChange={setDbOptions} />
     </div>
   );
 }
