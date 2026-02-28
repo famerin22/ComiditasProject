@@ -4,8 +4,23 @@
   font-weight: 400;
 
   color-scheme: light;
-  color: #1f2937;
-  background-color: #f3f4f6;
+  
+  --bg-main: #f3f4f6;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --bg-item: #f8fafc;
+  --bg-tag: #e0f2fe;
+  
+  --border-color: #e5e7eb;
+  --border-card: #f1f5f9;
+  
+  --text-main: #1f2937;
+  --text-title: #111827;
+  --text-muted: #6b7280;
+  --text-tag: #0369a1;
+
+  color: var(--text-main);
+  background-color: var(--bg-main);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -13,15 +28,36 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+:root.dark {
+  color-scheme: dark;
+  
+  --bg-main: #111827;
+  --bg-card: #1f2937;
+  --bg-input: #374151;
+  --bg-item: #374151;
+  --bg-tag: #1e3a8a;
+  
+  --border-color: #374151;
+  --border-card: #374151;
+  
+  --text-main: #f3f4f6;
+  --text-title: #f9fafb;
+  --text-muted: #9ca3af;
+  --text-tag: #bfdbfe;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s, color 0.3s;
 }
 
 h1, h2, h3, h4, h5, h6 {
   margin: 0;
-  color: #111827;
+  color: var(--text-title);
 }
 
 button {
@@ -41,6 +77,7 @@ button:focus-visible {
 }
 
 select, input {
-  color: #1f2937;
-  background-color: #ffffff;
+  color: var(--text-main);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
 }

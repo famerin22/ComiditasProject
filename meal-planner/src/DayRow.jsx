@@ -1,28 +1,27 @@
 import React from 'react';
-import MealPicker from './MealPicker';
+import MealSlot from './MealSlot';
 
-// We destructure the props here for cleaner code
-export default function DayRow({ day, data, options, onChange, onRequestAddFoods }) {
+export default function DayRow({ day, data, options, onAddItem, onRemoveItem }) {
   return (
-    <div style={{ background: 'white', padding: 16, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)', border: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <h3 style={{ fontWeight: 900, color: '#334155', borderBottom: '1px solid #f1f5f9', paddingBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)', border: '1px solid var(--border-card)', display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 15 }}>
+      <h3 style={{ fontWeight: 900, color: 'var(--text-title)', borderBottom: '1px solid var(--border-card)', paddingBottom: 8 }}>
         {day}
       </h3>
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <MealPicker 
+        <MealSlot 
           label="Almuerzo"
-          value={data.almuerzo || ""}
+          items={data.almuerzo}
           options={options}
-          onChange={(val) => onChange('almuerzo', val)}
-          onRequestAddFoods={(opt) => onRequestAddFoods && onRequestAddFoods('almuerzo', opt)}
+          onAddItem={(id, amount, unit) => onAddItem('almuerzo', id, amount, unit)}
+          onRemoveItem={(id) => onRemoveItem('almuerzo', id)}
         />
-        <MealPicker 
+        <MealSlot 
           label="Cena"
-          value={data.cena || ""}
+          items={data.cena}
           options={options}
-          onChange={(val) => onChange('cena', val)}
-          onRequestAddFoods={(opt) => onRequestAddFoods && onRequestAddFoods('cena', opt)}
+          onAddItem={(id, amount, unit) => onAddItem('cena', id, amount, unit)}
+          onRemoveItem={(id) => onRemoveItem('cena', id)}
         />
       </div>
     </div>

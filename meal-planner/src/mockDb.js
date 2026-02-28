@@ -8,8 +8,18 @@ const getInitialData = () => {
     }
   }
   return [
-    { id: 1, name: 'Milanesas con Puré', is_recipe: true },
-    { id: 2, name: 'Fideos con Tuco', is_recipe: true },
+    { 
+      id: 1, 
+      name: 'Milanesas con Puré', 
+      is_recipe: true, 
+      ingredients: [4, 9, 10, 11] // Papas, Manteca, Huevo, Pan Rallado
+    },
+    { 
+      id: 2, 
+      name: 'Fideos con Tuco', 
+      is_recipe: true, 
+      ingredients: [5, 6, 7, 12] // Fideos, Salsa, Carne Picada, Cebolla
+    },
     { id: 3, name: 'Pechuga de Pollo', is_recipe: false },
     { id: 4, name: 'Papas', is_recipe: false },
     { id: 5, name: 'Fideos', is_recipe: false },
@@ -32,7 +42,7 @@ const saveToLocal = () => {
 export const getFoods = () => [...MOCK_DB];
 
 export const addFood = (food) => {
-  const newFood = { ...food, id: Date.now() };
+  const newFood = { ...food, id: Date.now(), ingredients: food.ingredients || [] };
   MOCK_DB.push(newFood);
   saveToLocal();
   return newFood;
@@ -47,6 +57,36 @@ export const updateFood = (id, updatedFood) => {
 export const deleteFood = (id) => {
   MOCK_DB = MOCK_DB.filter(f => f.id !== id);
   saveToLocal();
+};
+
+// PERSISTENCE FOR SCHEDULES
+export const getSchedule = (defaultSchedule) => {
+  const saved = localStorage.getItem('meal_planner_schedule');
+  const lastReset = localStorage.getItem('meal_planner_last_reset');
+  
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0: Sun, 1: Mon, ..., 6: Sat
+  const todayStr = today.toISOString().split('T')[0];
+
+  // If it's Saturday (6) and we haven't reset today yet
+  if (dayOfWeek === 6 && lastReset !== todayStr) {
+    localStorage.setItem('meal_planner_last_reset', todayStr);
+    localStorage.setItem('meal_planner_schedule', JSON.stringify(defaultSchedule));
+    return defaultSchedule;
+  }
+
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      return defaultSchedule;
+    }
+  }
+  return defaultSchedule;
+};
+
+export const saveSchedule = (schedule) => {
+  localStorage.setItem('meal_planner_schedule', JSON.stringify(schedule));
 };
 
 export default MOCK_DB;
