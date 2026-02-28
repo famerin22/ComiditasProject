@@ -1,27 +1,97 @@
 import React, { useState } from 'react';
-import { Plus, X, Check } from 'lucide-react';
+import { Plus, X, Check, Search } from 'lucide-react';
+
+function FoodSelectorModal({ options, onSelect, onClose }) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredOptions = options.filter(o => 
+    o.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+      <div style={{ backgroundColor: 'var(--bg-card)', width: '100%', maxWidth: '500px', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', maxHeight: '80vh' }}>
+        <div style={{ padding: '16px', borderBottom: '1px solid var(--border-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: 'var(--text-title)' }}>Seleccionar Alimento</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div style={{ padding: '12px' }}>
+          <div style={{ position: 'relative', marginBottom: '12px' }}>
+            <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input 
+              type="text" 
+              placeholder="Buscar alimento o receta..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ width: '100%', padding: '8px 8px 8px 32px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '14px' }}
+            />
+          </div>
+
+          <div style={{ overflowY: 'auto', maxHeight: '50vh' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid var(--border-card)', textAlign: 'left' }}>
+                  <th style={{ padding: '8px', color: 'var(--text-muted)' }}>Nombre</th>
+                  <th style={{ padding: '8px', color: 'var(--text-muted)' }}>Tipo</th>
+                  <th style={{ padding: '8px', textAlign: 'right', color: 'var(--text-muted)' }}>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredOptions.length > 0 ? (
+                  filteredOptions.map(food => (
+                    <tr key={food.id} style={{ borderBottom: '1px solid var(--border-card)' }}>
+                      <td style={{ padding: '10px 8px', color: 'var(--text-main)', fontWeight: 500 }}>{food.name}</td>
+                      <td style={{ padding: '10px 8px' }}>
+                        <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', backgroundColor: food.is_recipe ? 'var(--bg-tag)' : 'rgba(0,0,0,0.05)', color: food.is_recipe ? 'var(--text-tag)' : 'var(--text-muted)' }}>
+                          {food.is_recipe ? 'Receta' : 'Ingrediente'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 8px', textAlign: 'right' }}>
+                        <button 
+                          onClick={() => onSelect(food)}
+                          style={{ padding: '4px 8px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                        >
+                          Elegir
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      No se encontraron resultados
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function MealSlot({ label, items = [], options = [], onAddItem, onRemoveItem }) {
-  const [showPicker, setShowPicker] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [selectedFood, setSelectedFood] = useState(null);
   const [amount, setAmount] = useState('1');
   const [unit, setUnit] = useState('');
 
-  const handleSelect = (e) => {
-    const id = e.target.value;
-    if (id) {
-      const food = options.find(o => o.id === Number(id));
-      setSelectedFood(food);
-      setAmount('1');
-      setUnit(food.is_recipe ? 'unidades' : '');
-    }
+  const handleSelect = (food) => {
+    setSelectedFood(food);
+    setAmount('1');
+    setUnit(food.is_recipe ? 'unidades' : '');
+    setShowModal(false);
   };
 
   const confirmAdd = () => {
     if (selectedFood) {
       onAddItem(selectedFood.id, amount, unit);
       setSelectedFood(null);
-      setShowPicker(false);
       setAmount('1');
       setUnit('');
     }
@@ -29,7 +99,6 @@ export default function MealSlot({ label, items = [], options = [], onAddItem, o
 
   const cancelSelection = () => {
     setSelectedFood(null);
-    setShowPicker(false);
   };
 
   return (
@@ -39,34 +108,22 @@ export default function MealSlot({ label, items = [], options = [], onAddItem, o
           {label}
         </label>
         <button 
-          onClick={() => { setShowPicker(!showPicker); setSelectedFood(null); }}
+          onClick={() => setShowModal(true)}
           style={{ padding: '2px', background: 'none', border: 'none', color: '#6366f1', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
         >
-          {showPicker ? <X size={16} /> : <Plus size={16} />}
+          <Plus size={16} />
         </button>
       </div>
 
-      {showPicker && !selectedFood && (
-        <select 
-          autoFocus
-          onChange={handleSelect} 
-          style={{ width: '100%', padding: '4px', borderRadius: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '12px', marginBottom: '8px' }}
-        >
-          <option value="">Seleccionar...</option>
-          <optgroup label="Recetas" style={{ backgroundColor: 'var(--bg-input)' }}>
-            {options.filter(o => o.is_recipe).map(o => (
-              <option key={o.id} value={o.id}>{o.name}</option>
-            ))}
-          </optgroup>
-          <optgroup label="Ingredientes" style={{ backgroundColor: 'var(--bg-input)' }}>
-            {options.filter(o => !o.is_recipe).map(o => (
-              <option key={o.id} value={o.id}>{o.name}</option>
-            ))}
-          </optgroup>
-        </select>
+      {showModal && (
+        <FoodSelectorModal 
+          options={options} 
+          onSelect={handleSelect} 
+          onClose={() => setShowModal(false)} 
+        />
       )}
 
-      {showPicker && selectedFood && (
+      {selectedFood && (
         <div style={{ display: 'flex', gap: '4px', marginBottom: '8px', alignItems: 'center', backgroundColor: 'var(--bg-item)', padding: '4px', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
           <span style={{ fontSize: '11px', fontWeight: 'bold', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-main)' }}>
             {selectedFood.name}
