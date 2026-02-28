@@ -20,21 +20,13 @@ const INITIAL_STATE = {
 };
 
 export default function App() {
-  console.log('App mounting...');
   const [dbOptions, setDbOptions] = useState([]);
-  const [schedules, setSchedules] = useState(() => {
-    const s = getSchedule(INITIAL_STATE);
-    console.log('Schedule loaded:', s);
-    return s;
-  });
+  const [schedules, setSchedules] = useState(() => getSchedule(INITIAL_STATE));
   const [darkMode, setDarkMode] = useState(() => {
-    const theme = localStorage.getItem('theme') === 'dark';
-    console.log('Initial theme:', theme ? 'dark' : 'light');
-    return theme;
+    return localStorage.getItem('theme') === 'dark';
   });
 
   useEffect(() => {
-    console.log('App effect: loading foods');
     setDbOptions(getFoods());
   }, []);
 
