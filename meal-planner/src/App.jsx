@@ -101,32 +101,32 @@ export default function App() {
   };
 
   return (
-    <div style={{ padding: '20px', minHeight: '100vh', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', transition: '0.3s' }}>
-      <header style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Utensils /> MealPlan Pro
+    <div style={{ padding: '10px 15px', minHeight: '100vh', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', transition: '0.3s' }}>
+      <header style={{ marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+          <Utensils size={28} /> MealPlan Pro
         </h1>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', width: '100%' }}>
           <button 
             onClick={() => setDarkMode(!darkMode)}
-            style={{ padding: '10px', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
+            style={{ padding: '10px', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             {darkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
           
           <FoodManager onDatabaseChange={setDbOptions} />
 
-          <button style={{ padding: '10px 20px', backgroundColor: '#ff6b35', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShoppingCart size={20} /> Ver Lista de Compras
+          <button style={{ flex: 1, minWidth: '140px', padding: '10px 15px', backgroundColor: '#ff6b35', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}>
+            <ShoppingCart size={18} /> <span style={{ whiteSpace: 'nowrap' }}>Lista de Compras</span>
           </button>
         </div>
       </header>
 
-      <div style={{ display: 'flex', gap: '20px', width: '100%' }}>
+      <div className="main-grid" style={{ display: 'flex', gap: '20px', width: '100%', flexWrap: 'wrap' }}>
         {/* FER'S COLUMN */}
-        <div style={{ flex: 1 }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#6366f1', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <User /> Fer
+        <div style={{ flex: '1 1 350px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#6366f1', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--bg-card)', padding: '10px', borderRadius: '10px', border: '1px solid var(--border-card)' }}>
+            <User size={20} /> Fer
           </h2>
           {DAYS.map(day => (
             <DayRow 
@@ -141,9 +141,9 @@ export default function App() {
         </div>
 
         {/* MELI'S COLUMN */}
-        <div style={{ flex: 1 }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#ec4899', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <User /> Meli
+        <div style={{ flex: '1 1 350px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#ec4899', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--bg-card)', padding: '10px', borderRadius: '10px', border: '1px solid var(--border-card)' }}>
+            <User size={20} /> Meli
           </h2>
           {DAYS.map(day => (
             <DayRow 

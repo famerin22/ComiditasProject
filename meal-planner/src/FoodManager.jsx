@@ -35,11 +35,11 @@ function RecipeIngredientEditor({ ingredients = [], allFoods = [], onUpdate }) {
     <div style={{ marginTop: '15px', borderTop: '1px solid var(--border-card)', paddingTop: '15px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
         <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--text-title)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <UtensilsCrossed size={16} /> Ingredientes de la Receta
+          <UtensilsCrossed size={16} /> Ingredientes
         </h4>
         {!showAdd && !selectedFood && (
-          <button onClick={() => setShowAdd(true)} style={{ padding: '4px 8px', fontSize: '12px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-            + Añadir Ingrediente
+          <button onClick={() => setShowAdd(true)} style={{ padding: '8px 12px', fontSize: '12px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+            + Añadir
           </button>
         )}
       </div>
@@ -48,48 +48,53 @@ function RecipeIngredientEditor({ ingredients = [], allFoods = [], onUpdate }) {
         {ingredients.map((ing, idx) => {
           const food = allFoods.find(f => f.id === ing.id);
           return (
-            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--bg-tag)', color: 'var(--text-tag)', padding: '4px 10px', borderRadius: '20px', fontSize: '12px' }}>
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--bg-tag)', color: 'var(--text-tag)', padding: '6px 12px', borderRadius: '20px', fontSize: '13px' }}>
               <span>{food?.name} ({ing.amount}{ing.unit})</span>
-              <X size={14} onClick={() => removeIng(idx)} style={{ cursor: 'pointer', color: '#ef4444' }} />
+              <X size={16} onClick={() => removeIng(idx)} style={{ cursor: 'pointer', color: '#ef4444' }} />
             </div>
           );
         })}
       </div>
 
       {showAdd && !selectedFood && (
-        <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '10px' }}>
+        <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '15px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
           <input 
             type="text" 
             placeholder="Buscar ingrediente..." 
             value={searchTerm}
             autoFocus
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', marginBottom: '8px', boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', marginBottom: '10px', boxSizing: 'border-box', fontSize: '16px' }}
           />
-          <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+          <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-card)', borderRadius: '8px' }}>
             {filtered.map(f => (
-              <div key={f.id} onClick={() => handleAdd(f)} style={{ padding: '8px', cursor: 'pointer', borderBottom: '1px solid var(--border-card)', display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+              <div key={f.id} onClick={() => handleAdd(f)} style={{ padding: '12px', cursor: 'pointer', borderBottom: '1px solid var(--border-card)', display: 'flex', justifyContent: 'space-between', fontSize: '14px', backgroundColor: 'var(--bg-input)' }}>
                 <span>{f.name}</span>
                 <span style={{ color: 'var(--text-muted)' }}>{f.default_unit}</span>
               </div>
             ))}
           </div>
-          <button onClick={() => setShowAdd(false)} style={{ marginTop: '8px', width: '100%', padding: '6px', background: 'none', border: '1px solid var(--border-color)', color: 'var(--text-muted)', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Cancelar</button>
+          <button onClick={() => setShowAdd(false)} style={{ marginTop: '10px', width: '100%', padding: '10px', background: 'none', border: '1px solid var(--border-color)', color: 'var(--text-muted)', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>Cancelar</button>
         </div>
       )}
 
       {selectedFood && (
-        <div style={{ backgroundColor: 'var(--bg-item)', border: '1px solid #10b981', borderRadius: '8px', padding: '12px', display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>{selectedFood.name}</div>
-            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
+        <div style={{ backgroundColor: 'var(--bg-item)', border: '1px solid #10b981', borderRadius: '10px', padding: '15px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text-main)' }}>{selectedFood.name}</div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Cantidad</label>
+              <input type="number" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '16px' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Unidad</label>
+              <input type="text" value={unit} onChange={(e) => setUnit(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '16px' }} />
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>Unidad</div>
-            <input type="text" value={unit} onChange={(e) => setUnit(e.target.value)} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => setSelectedFood(null)} style={{ flex: 1, padding: '10px', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Cancelar</button>
+            <button onClick={confirmAdd} style={{ flex: 1, padding: '10px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Añadir</button>
           </div>
-          <button onClick={confirmAdd} style={{ padding: '8px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}><Check size={18}/></button>
-          <button onClick={() => setSelectedFood(null)} style={{ padding: '8px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}><X size={18}/></button>
         </div>
       )}
     </div>

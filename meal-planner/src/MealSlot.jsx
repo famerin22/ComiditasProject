@@ -9,50 +9,51 @@ function FoodSelectorModal({ options, onSelect, onClose }) {
   );
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-      <div style={{ backgroundColor: 'var(--bg-card)', width: '100%', maxWidth: '500px', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', maxHeight: '80vh' }}>
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '10px' }}>
+      <div style={{ backgroundColor: 'var(--bg-card)', width: '100%', maxWidth: '500px', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
         <div style={{ padding: '16px', borderBottom: '1px solid var(--border-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: 'var(--text-title)' }}>Seleccionar Alimento</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-            <X size={20} />
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '5px' }}>
+            <X size={24} />
           </button>
         </div>
         
-        <div style={{ padding: '12px' }}>
+        <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ position: 'relative', marginBottom: '12px' }}>
-            <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input 
               type="text" 
               placeholder="Buscar alimento o receta..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ width: '100%', padding: '8px 8px 8px 32px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '12px 12px 12px 35px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '16px', boxSizing: 'border-box' }}
             />
           </div>
 
-          <div style={{ overflowY: 'auto', maxHeight: '50vh' }}>
+          <div style={{ overflowY: 'auto', flex: 1 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--border-card)', textAlign: 'left' }}>
-                  <th style={{ padding: '8px', color: 'var(--text-muted)' }}>Nombre</th>
-                  <th style={{ padding: '8px', color: 'var(--text-muted)' }}>Tipo</th>
-                  <th style={{ padding: '8px', textAlign: 'right', color: 'var(--text-muted)' }}>Acción</th>
+                  <th style={{ padding: '10px 8px', color: 'var(--text-muted)' }}>Nombre</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'right', color: 'var(--text-muted)' }}>Acción</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredOptions.length > 0 ? (
                   filteredOptions.map(food => (
                     <tr key={food.id} style={{ borderBottom: '1px solid var(--border-card)' }}>
-                      <td style={{ padding: '10px 8px', color: 'var(--text-main)', fontWeight: 500 }}>{food.name}</td>
-                      <td style={{ padding: '10px 8px' }}>
-                        <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', backgroundColor: food.is_recipe ? 'var(--bg-tag)' : 'rgba(0,0,0,0.05)', color: food.is_recipe ? 'var(--text-tag)' : 'var(--text-muted)' }}>
-                          {food.is_recipe ? 'Receta' : 'Ingrediente'}
-                        </span>
+                      <td style={{ padding: '12px 8px', color: 'var(--text-main)', fontWeight: 500 }}>
+                        {food.name}
+                        <div style={{ fontSize: '10px', marginTop: '2px' }}>
+                          <span style={{ padding: '1px 4px', borderRadius: '3px', backgroundColor: food.is_recipe ? 'var(--bg-tag)' : 'rgba(0,0,0,0.05)', color: food.is_recipe ? 'var(--text-tag)' : 'var(--text-muted)' }}>
+                            {food.is_recipe ? 'Receta' : 'Ingrediente'}
+                          </span>
+                        </div>
                       </td>
-                      <td style={{ padding: '10px 8px', textAlign: 'right' }}>
+                      <td style={{ padding: '12px 8px', textAlign: 'right' }}>
                         <button 
                           onClick={() => onSelect(food)}
-                          style={{ padding: '4px 8px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                          style={{ padding: '8px 12px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
                         >
                           Elegir
                         </button>
@@ -61,7 +62,7 @@ function FoodSelectorModal({ options, onSelect, onClose }) {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="3" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <td colSpan="2" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                       No se encontraron resultados
                     </td>
                   </tr>
@@ -80,35 +81,36 @@ function QuantityModal({ food, onConfirm, onCancel }) {
   const [unit, setUnit] = useState(food.default_unit || (food.is_recipe ? 'unidades' : 'g'));
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '20px' }}>
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '15px' }}>
       <div style={{ backgroundColor: 'var(--bg-card)', width: '100%', maxWidth: '400px', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '16px', borderBottom: '1px solid var(--border-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: 'var(--text-title)' }}>Definir Cantidad</h3>
-          <button onClick={onCancel} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-            <X size={20} />
+          <button onClick={onCancel} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '5px' }}>
+            <X size={24} />
           </button>
         </div>
         
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text-main)', textAlign: 'center' }}>
+        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#6366f1', textAlign: 'center' }}>
             {food.name}
           </div>
           
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Cantidad</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Cantidad</label>
               <input 
                 type="number" 
                 autoFocus
+                inputMode="decimal"
                 value={amount} 
                 onChange={(e) => setAmount(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box' }}
+                style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box', fontSize: '16px' }}
               />
             </div>
-            <div style={{ flex: 2 }}>
-              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Unidad</label>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Unidad</label>
               {food.is_recipe ? (
-                <div style={{ padding: '10px', borderRadius: '6px', backgroundColor: 'var(--bg-item)', color: 'var(--text-muted)', border: '1px solid var(--border-color)' }}>
+                <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-item)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', fontSize: '16px' }}>
                   unidades
                 </div>
               ) : (
@@ -117,24 +119,24 @@ function QuantityModal({ food, onConfirm, onCancel }) {
                   value={unit} 
                   onChange={(e) => setUnit(e.target.value)}
                   placeholder="g, ml, fetas..."
-                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box', fontSize: '16px' }}
                 />
               )}
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
             <button 
               onClick={onCancel}
-              style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', cursor: 'pointer', fontWeight: 'bold' }}
+              style={{ flex: 1, padding: '14px', borderRadius: '10px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px' }}
             >
               Cancelar
             </button>
             <button 
               onClick={() => onConfirm(amount, food.is_recipe ? 'unidades' : unit)}
-              style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: 'white', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              style={{ flex: 1, padding: '14px', borderRadius: '10px', border: 'none', backgroundColor: '#10b981', color: 'white', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '16px' }}
             >
-              <Check size={18} /> Confirmar
+              <Check size={20} /> Confirmar
             </button>
           </div>
         </div>
