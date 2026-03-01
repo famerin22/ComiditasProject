@@ -252,22 +252,42 @@ export default function App() {
     const otherUser = activeUser === 'fer' ? 'meli' : 'fer';
     const itemsToCopy = schedules[activeUser][day][time].map(item => ({
       ...item,
-      id: Date.now() + Math.random() // Unique ID for the copy
+      id: Date.now() + Math.random()
     }));
-
     if (itemsToCopy.length === 0) return;
-
-    setSchedules(prev => ({
-      ...prev,
-      [otherUser]: {
-        ...prev[otherUser],
-        [day]: {
-          ...prev[otherUser][day],
-          [time]: [...prev[otherUser][day][time], ...itemsToCopy]
-        }
-      }
-    }));
+    setSchedules(prev => ({...prev, [otherUser]: { ...prev[otherUser], [day]: { ...prev[otherUser][day], [time]: [...prev[otherUser][day][time], ...itemsToCopy] }}}));
     alert(`Comida copiada a ${otherUser.toUpperCase()}`);
+  };
+
+  const handleCopyToTomorrow = (currentDay, time) => {
+    const currentIndex = DAYS.indexOf(currentDay);
+    if (currentIndex === -1 || currentIndex === DAYS.length - 1) {
+      alert("No hay un 'mañana' en esta semana para copiar.");
+      return;
+    }
+    const tomorrow = DAYS[currentIndex + 1];
+    const itemsToCopy = schedules[activeUser][currentDay][time].map(item => ({
+      ...item,
+      id: Date.now() + Math.random()
+    }));
+    if (itemsToCopy.length === 0) return;
+    setSchedules(prev => ({...prev, [activeUser]: { ...prev[activeUser], [tomorrow]: { ...prev[activeUser][tomorrow], [time]: [...prev[activeUser][tomorrow][time], ...itemsToCopy] }}}));
+    alert(`Copiado al ${tomorrow}`);
+  };
+
+  const shareWeeklyMenu = () => {
+    const schedule = schedules[activeUser];
+    let text = `📅 *MENÚ SEMANAL (${activeUser.toUpperCase()})*\n\n`;
+    DAYS.forEach(day => {
+      text += `*${day.toUpperCase()}*\n`;
+      const meals = schedule[day];
+      if (meals.desayuno.length) text += `☕ Des: ${meals.desayuno.map(i => i.name).join(', ')}\n`;
+      if (meals.almuerzo.length) text += `🍴 Alm: ${meals.almuerzo.map(i => i.name).join(', ')}\n`;
+      if (meals.merienda.length) text += `🍪 Mer: ${meals.merienda.map(i => i.name).join(', ')}\n`;
+      if (meals.cena.length) text += `🌙 Cena: ${meals.cena.map(i => i.name).join(', ')}\n`;
+      text += `\n`;
+    });
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const clearWeek = () => {
@@ -275,6 +295,12 @@ export default function App() {
       setSchedules(prev => ({ ...prev, [activeUser]: createEmptySchedule() }));
     }
   };
+
+  const getTodayName = () => {
+    const daysMap = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+    return daysMap[new Date().getDay()];
+  };
+  const todayName = getTodayName();
 
   return (
     <div style={{ padding: '10px 15px', minHeight: '100vh', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', transition: '0.3s' }}>
@@ -300,12 +326,13 @@ export default function App() {
         <button onClick={() => setActiveUser('meli')} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', backgroundColor: activeUser === 'meli' ? '#ec4899' : 'transparent', color: activeUser === 'meli' ? 'white' : 'var(--text-muted)', cursor: 'pointer' }}>Meli</button>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+        <button onClick={shareWeeklyMenu} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #25D366', color: '#25D366', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>Compartir Menú</button>
         <button onClick={clearWeek} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #ef4444', color: '#ef4444', backgroundColor: 'transparent', cursor: 'pointer' }}>Vaciar mi semana</button>
       </div>
 
       <div style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
-        {DAYS.map(day => <DayRow key={day} day={day} data={schedules[activeUser][day]} options={dbOptions} onAddItem={(time, foodId, amount, unit) => handleAddItem(activeUser, day, time, foodId, amount, unit)} onRemoveItem={(time, itemId) => handleRemoveItem(activeUser, day, time, itemId)} onCopyMeal={handleCopyMeal} />)}
+        {DAYS.map(day => <DayRow key={day} day={day} isToday={day === todayName} data={schedules[activeUser][day]} options={dbOptions} onAddItem={(time, foodId, amount, unit) => handleAddItem(activeUser, day, time, foodId, amount, unit)} onRemoveItem={(time, itemId) => handleRemoveItem(activeUser, day, time, itemId)} onCopyMeal={handleCopyMeal} onCopyToTomorrow={handleCopyToTomorrow} />)}
       </div>
     </div>
   );

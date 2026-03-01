@@ -2,12 +2,25 @@ import React from 'react';
 import MealSlot from './MealSlot';
 import { Coffee, Utensils, Cookie, Moon } from 'lucide-react';
 
-export default function DayRow({ day, data, options, onAddItem, onRemoveItem, onCopyMeal }) {
+export default function DayRow({ day, isToday, data, options, onAddItem, onRemoveItem, onCopyMeal, onCopyToTomorrow }) {
   return (
-    <div style={{ background: 'var(--bg-card)', padding: '16px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid var(--border-card)', display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '20px' }}>
-      <h3 style={{ fontWeight: 900, fontSize: '18px', color: 'var(--text-title)', borderBottom: '2px solid var(--border-card)', paddingBottom: '10px', margin: 0 }}>
-        {day}
-      </h3>
+    <div style={{ 
+      background: isToday ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-card)', 
+      padding: '16px', 
+      borderRadius: '16px', 
+      boxShadow: isToday ? '0 0 0 2px #6366f1' : '0 4px 6px -1px rgba(0,0,0,0.1)', 
+      border: '1px solid var(--border-card)', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: '15px', 
+      marginBottom: '20px',
+      position: 'relative'
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--border-card)', paddingBottom: '10px' }}>
+        <h3 style={{ fontWeight: 900, fontSize: '18px', color: isToday ? '#6366f1' : 'var(--text-title)', margin: 0 }}>
+          {day} {isToday && <span style={{ fontSize: '10px', verticalAlign: 'middle', backgroundColor: '#6366f1', color: 'white', padding: '2px 6px', borderRadius: '10px', marginLeft: '5px' }}>HOY</span>}
+        </h3>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -18,6 +31,7 @@ export default function DayRow({ day, data, options, onAddItem, onRemoveItem, on
             onAddItem={(id, amount, unit) => onAddItem('desayuno', id, amount, unit)}
             onRemoveItem={(id) => onRemoveItem('desayuno', id)}
             onCopyAll={() => onCopyMeal(day, 'desayuno')}
+            onCopyToTomorrow={() => onCopyToTomorrow(day, 'desayuno')}
           />
           <MealSlot 
             label={<><Utensils size={14} /> Almuerzo</>}
@@ -26,6 +40,7 @@ export default function DayRow({ day, data, options, onAddItem, onRemoveItem, on
             onAddItem={(id, amount, unit) => onAddItem('almuerzo', id, amount, unit)}
             onRemoveItem={(id) => onRemoveItem('almuerzo', id)}
             onCopyAll={() => onCopyMeal(day, 'almuerzo')}
+            onCopyToTomorrow={() => onCopyToTomorrow(day, 'almuerzo')}
           />
         </div>
 
@@ -37,6 +52,7 @@ export default function DayRow({ day, data, options, onAddItem, onRemoveItem, on
             onAddItem={(id, amount, unit) => onAddItem('merienda', id, amount, unit)}
             onRemoveItem={(id) => onRemoveItem('merienda', id)}
             onCopyAll={() => onCopyMeal(day, 'merienda')}
+            onCopyToTomorrow={() => onCopyToTomorrow(day, 'merienda')}
           />
           <MealSlot 
             label={<><Moon size={14} /> Cena</>}
@@ -45,10 +61,12 @@ export default function DayRow({ day, data, options, onAddItem, onRemoveItem, on
             onAddItem={(id, amount, unit) => onAddItem('cena', id, amount, unit)}
             onRemoveItem={(id) => onRemoveItem('cena', id)}
             onCopyAll={() => onCopyMeal(day, 'cena')}
+            onCopyToTomorrow={() => onCopyToTomorrow(day, 'cena')}
           />
         </div>
       </div>
     </div>
   );
 }
+
 }
