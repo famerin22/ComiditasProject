@@ -181,7 +181,7 @@ const CATEGORY_COLORS = {
   'Otros': '#94a3b8'
 };
 
-export default function MealSlot({ label, items = [], options = [], onAddItem, onRemoveItem, onUpdateItem, onCopyAll, onCopyToTomorrow }) {
+export default function MealSlot({ label, items = [], options = [], onAddItem, onRemoveItem, onUpdateItem, onCopyAll, onCopyToTomorrow, recentFoods = [] }) {
   const [showFoodModal, setShowFoodModal] = useState(false);
   const [selectedFoodForQty, setSelectedFoodForQty] = useState(null);
   const [viewRecipe, setViewRecipe] = useState(null);
@@ -222,7 +222,7 @@ export default function MealSlot({ label, items = [], options = [], onAddItem, o
         </div>
       </div>
 
-      {showFoodModal && <FoodSelectorModal options={options} onSelect={handleSelectFood} onClose={() => setShowFoodModal(false)} />}
+      {showFoodModal && <FoodSelectorModal options={options} recentFoods={recentFoods} onSelect={handleSelectFood} onClose={() => setShowFoodModal(false)} />}
       
       {viewRecipe && <RecipeDetailModal item={viewRecipe} options={options} onClose={() => setViewRecipe(null)} />}
 
