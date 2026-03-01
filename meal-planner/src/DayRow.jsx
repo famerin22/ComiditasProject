@@ -79,4 +79,3 @@ export default function DayRow({ day, isToday, data, options, onAddItem, onRemov
     </div>
   );
 }
-}

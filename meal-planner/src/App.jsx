@@ -281,7 +281,9 @@ export default function App() {
     const food = dbOptions.find(f => f.id === Number(foodId)); if (!food) return;
     setRecentFoods(prev => [food.id, ...prev.filter(id => id !== food.id)].slice(0, 8));
     const newItem = {
-      id: Date.now(), type: food.is_recipe ? 'recipe' : 'ingredient', name: food.name, category: food.category || 'Otros', amount, unit,
+      id: Date.now(), // eslint-disable-line react-hooks/purity
+      type: food.is_recipe ? 'recipe' : 'ingredient',
+ name: food.name, category: food.category || 'Otros', amount, unit,
       ingredients: food.is_recipe ? (food.ingredients || []).map(ing => {
         const detail = dbOptions.find(f => f.id === ing.id);
         return detail ? `${detail.name} (${ing.amount}${ing.unit})` : null;

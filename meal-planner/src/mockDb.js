@@ -114,7 +114,7 @@ export const getSchedule = (defaultSchedule) => {
         }
       });
       return parsed;
-    } catch (e) {
+    } catch {
       return defaultSchedule;
     }
   }

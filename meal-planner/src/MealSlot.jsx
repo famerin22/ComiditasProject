@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, X, Check, Search, Copy, ArrowRight, Star, Info, BookOpen } from 'lucide-react';
-import { getFoods, CATEGORIES } from './mockDb';
+import { CATEGORIES } from './mockDb';
 
 function RecipeDetailModal({ item, options, onClose }) {
   const foodDef = options.find(o => o.name === item.name && o.is_recipe);
