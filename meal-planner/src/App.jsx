@@ -211,6 +211,41 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
   );
 }
 
+function WeeklyStats({ schedule }) {
+  const stats = {};
+  Object.values(schedule).forEach(day => {
+    Object.values(day).forEach(meal => {
+      meal.forEach(item => {
+        const cat = item.category || 'Otros';
+        stats[cat] = (stats[cat] || 0) + 1;
+      });
+    });
+  });
+
+  const CATEGORY_COLORS = {
+    'Proteína': '#f87171', 'Carne': '#ef4444', 'Pasta': '#fbbf24',
+    'Verdura': '#34d399', 'Legumbres': '#60a5fa', 'Lácteo': '#a78bfa',
+    'Salsa': '#f472b6', 'Otros': '#94a3b8'
+  };
+
+  return (
+    <div style={{ backgroundColor: 'var(--bg-card)', padding: '15px', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '20px' }}>
+      <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: 'var(--text-title)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        📊 Equilibrio Semanal
+      </h4>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+        {Object.entries(stats).map(([cat, count]) => (
+          <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--bg-item)', padding: '5px 10px', borderRadius: '20px', border: `1px solid ${CATEGORY_COLORS[cat] || '#ccc'}` }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: CATEGORY_COLORS[cat] }} />
+            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{cat}: {count}</span>
+          </div>
+        ))}
+        {Object.keys(stats).length === 0 && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Planifica algunas comidas para ver las estadísticas.</span>}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [dbOptions, setDbOptions] = useState([]);
   const [schedules, setSchedules] = useState(() => getSchedule(INITIAL_STATE));
@@ -226,6 +261,10 @@ export default function App() {
     document.documentElement.classList.toggle('dark', darkMode);
     localStorage.setItem('theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   const handleAddItem = (person, day, time, foodId, amount, unit) => {
     const food = dbOptions.find(f => f.id === Number(foodId));
@@ -341,11 +380,17 @@ export default function App() {
         <button onClick={() => setActiveUser('fer')} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', backgroundColor: activeUser === 'fer' ? '#6366f1' : 'transparent', color: activeUser === 'fer' ? 'white' : 'var(--text-muted)', cursor: 'pointer' }}>Fer</button>
         <button onClick={() => setActiveUser('meli')} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', backgroundColor: activeUser === 'meli' ? '#ec4899' : 'transparent', color: activeUser === 'meli' ? 'white' : 'var(--text-muted)', cursor: 'pointer' }}>Meli</button>
       </div>
+<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+  <div style={{ display: 'flex', gap: '8px' }}>
+    <button onClick={shareWeeklyMenu} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #25D366', color: '#25D366', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>Compartir</button>
+    <button onClick={handlePrint} className="no-print" style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--text-muted)', color: 'var(--text-main)', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>🖨️ Imprimir</button>
+  </div>
+  <button onClick={clearWeek} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #ef4444', color: '#ef4444', backgroundColor: 'transparent', cursor: 'pointer' }}>Vaciar mi semana</button>
+</div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-        <button onClick={shareWeeklyMenu} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #25D366', color: '#25D366', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>Compartir Menú</button>
-        <button onClick={clearWeek} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #ef4444', color: '#ef4444', backgroundColor: 'transparent', cursor: 'pointer' }}>Vaciar mi semana</button>
-      </div>
+<WeeklyStats schedule={schedules[activeUser]} />
+
+<div className="main-grid">
 
       <div style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
         {DAYS.map(day => <DayRow key={day} day={day} isToday={day === todayName} data={schedules[activeUser][day]} options={dbOptions} onAddItem={(time, foodId, amount, unit) => handleAddItem(activeUser, day, time, foodId, amount, unit)} onRemoveItem={(time, itemId) => handleRemoveItem(activeUser, day, time, itemId)} onUpdateItem={(time, id, amount, unit) => handleUpdateItem(activeUser, day, time, id, amount, unit)} onCopyMeal={handleCopyMeal} onCopyToTomorrow={handleCopyToTomorrow} />)}

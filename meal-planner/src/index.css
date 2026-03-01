@@ -76,8 +76,44 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-select, input {
-  color: var(--text-main);
-  background-color: var(--bg-input);
-  border: 1px solid var(--border-color);
+@media print {
+  .no-print, 
+  header, 
+  button, 
+  .user-tabs, 
+  select, 
+  input,
+  .ShoppingListModal {
+    display: none !important;
+  }
+
+  body {
+    background-color: white !important;
+    color: black !important;
+    padding: 0 !important;
+  }
+
+  :root {
+    --bg-main: white !important;
+    --bg-card: white !important;
+    --bg-item: white !important;
+    --text-main: black !important;
+    --text-title: black !important;
+    --border-card: #ccc !important;
+  }
+
+  .main-grid {
+    display: block !important;
+  }
+
+  div[style*="box-shadow"] {
+    box-shadow: none !important;
+    border: 1px solid #eee !important;
+    margin-bottom: 10px !important;
+    page-break-inside: avoid;
+  }
+
+  h1, h2, h3 {
+    color: black !important;
+  }
 }
