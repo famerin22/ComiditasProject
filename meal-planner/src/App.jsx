@@ -9,7 +9,7 @@ const DAYS = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'];
 const createEmptySchedule = () => {
   const s = {};
   DAYS.forEach(day => {
-    s[day] = { almuerzo: [], cena: [] };
+    s[day] = { desayuno: [], almuerzo: [], merienda: [], cena: [] };
   });
   return s;
 };
@@ -22,6 +22,7 @@ const INITIAL_STATE = {
 export default function App() {
   const [dbOptions, setDbOptions] = useState([]);
   const [schedules, setSchedules] = useState(() => getSchedule(INITIAL_STATE));
+  const [activeUser, setActiveUser] = useState('fer');
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
   });
@@ -103,56 +104,62 @@ export default function App() {
   return (
     <div style={{ padding: '10px 15px', minHeight: '100vh', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', transition: '0.3s' }}>
       <header style={{ marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-          <Utensils size={28} /> MealPlan Pro
-        </h1>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+            <Utensils size={28} /> MealPlan Pro
+          </h1>
           <button 
             onClick={() => setDarkMode(!darkMode)}
             style={{ padding: '10px', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             {darkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
-          
-          <FoodManager onDatabaseChange={setDbOptions} />
+        </div>
 
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', width: '100%' }}>
+          <FoodManager onDatabaseChange={setDbOptions} />
           <button style={{ flex: 1, minWidth: '140px', padding: '10px 15px', backgroundColor: '#ff6b35', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}>
             <ShoppingCart size={18} /> <span style={{ whiteSpace: 'nowrap' }}>Lista de Compras</span>
           </button>
         </div>
       </header>
 
-      <div className="main-grid" style={{ display: 'flex', gap: '20px', width: '100%', flexWrap: 'wrap' }}>
-        {/* FER'S COLUMN */}
-        <div style={{ flex: '1 1 350px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#6366f1', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--bg-card)', padding: '10px', borderRadius: '10px', border: '1px solid var(--border-card)' }}>
-            <User size={20} /> Fer
-          </h2>
-          {DAYS.map(day => (
-            <DayRow 
-              key={day} 
-              day={day} 
-              data={schedules.fer[day]} 
-              options={dbOptions}
-              onAddItem={(time, foodId, amount, unit) => handleAddItem('fer', day, time, foodId, amount, unit)}
-              onRemoveItem={(time, itemId) => handleRemoveItem('fer', day, time, itemId)}
-            />
-          ))}
-        </div>
+      {/* USER TABS */}
+      <div style={{ display: 'flex', backgroundColor: 'var(--bg-card)', padding: '5px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border-color)' }}>
+        <button 
+          onClick={() => setActiveUser('fer')}
+          style={{ 
+            flex: 1, padding: '12px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px',
+            backgroundColor: activeUser === 'fer' ? '#6366f1' : 'transparent',
+            color: activeUser === 'fer' ? 'white' : 'var(--text-muted)',
+            transition: '0.2s'
+          }}
+        >
+          <User size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} /> Fer
+        </button>
+        <button 
+          onClick={() => setActiveUser('meli')}
+          style={{ 
+            flex: 1, padding: '12px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px',
+            backgroundColor: activeUser === 'meli' ? '#ec4899' : 'transparent',
+            color: activeUser === 'meli' ? 'white' : 'var(--text-muted)',
+            transition: '0.2s'
+          }}
+        >
+          <User size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} /> Meli
+        </button>
+      </div>
 
-        {/* MELI'S COLUMN */}
-        <div style={{ flex: '1 1 350px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#ec4899', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--bg-card)', padding: '10px', borderRadius: '10px', border: '1px solid var(--border-card)' }}>
-            <User size={20} /> Meli
-          </h2>
+      <div className="main-grid">
+        <div style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
           {DAYS.map(day => (
             <DayRow 
               key={day} 
               day={day} 
-              data={schedules.meli[day]} 
+              data={schedules[activeUser][day]} 
               options={dbOptions}
-              onAddItem={(time, foodId, amount, unit) => handleAddItem('meli', day, time, foodId, amount, unit)}
-              onRemoveItem={(time, itemId) => handleRemoveItem('meli', day, time, itemId)}
+              onAddItem={(time, foodId, amount, unit) => handleAddItem(activeUser, day, time, foodId, amount, unit)}
+              onRemoveItem={(time, itemId) => handleRemoveItem(activeUser, day, time, itemId)}
             />
           ))}
         </div>
