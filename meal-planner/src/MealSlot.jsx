@@ -75,30 +75,88 @@ function FoodSelectorModal({ options, onSelect, onClose }) {
   );
 }
 
-export default function MealSlot({ label, items = [], options = [], onAddItem, onRemoveItem }) {
-  const [showModal, setShowModal] = useState(false);
-  const [selectedFood, setSelectedFood] = useState(null);
+function QuantityModal({ food, onConfirm, onCancel }) {
   const [amount, setAmount] = useState('1');
-  const [unit, setUnit] = useState('');
+  const [unit, setUnit] = useState(food.is_recipe ? 'unidades' : '');
 
-  const handleSelect = (food) => {
-    setSelectedFood(food);
-    setAmount('1');
-    setUnit(food.is_recipe ? 'unidades' : '');
-    setShowModal(false);
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '20px' }}>
+      <div style={{ backgroundColor: 'var(--bg-card)', width: '100%', maxWidth: '400px', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '16px', borderBottom: '1px solid var(--border-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: 'var(--text-title)' }}>Definir Cantidad</h3>
+          <button onClick={onCancel} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text-main)', textAlign: 'center' }}>
+            {food.name}
+          </div>
+          
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Cantidad</label>
+              <input 
+                type="number" 
+                autoFocus
+                value={amount} 
+                onChange={(e) => setAmount(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box' }}
+              />
+            </div>
+            <div style={{ flex: 2 }}>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Unidad</label>
+              {food.is_recipe ? (
+                <div style={{ padding: '10px', borderRadius: '6px', backgroundColor: 'var(--bg-item)', color: 'var(--text-muted)', border: '1px solid var(--border-color)' }}>
+                  unidades
+                </div>
+              ) : (
+                <input 
+                  type="text" 
+                  value={unit} 
+                  onChange={(e) => setUnit(e.target.value)}
+                  placeholder="g, ml, fetas..."
+                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box' }}
+                />
+              )}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            <button 
+              onClick={onCancel}
+              style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              Cancelar
+            </button>
+            <button 
+              onClick={() => onConfirm(amount, food.is_recipe ? 'unidades' : unit)}
+              style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: 'white', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+            >
+              <Check size={18} /> Confirmar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function MealSlot({ label, items = [], options = [], onAddItem, onRemoveItem }) {
+  const [showFoodModal, setShowFoodModal] = useState(false);
+  const [selectedFoodForQty, setSelectedFoodForQty] = useState(null);
+
+  const handleSelectFood = (food) => {
+    setSelectedFoodForQty(food);
+    setShowFoodModal(false);
   };
 
-  const confirmAdd = () => {
-    if (selectedFood) {
-      onAddItem(selectedFood.id, amount, unit);
-      setSelectedFood(null);
-      setAmount('1');
-      setUnit('');
+  const handleConfirmQty = (amount, unit) => {
+    if (selectedFoodForQty) {
+      onAddItem(selectedFoodForQty.id, amount, unit);
+      setSelectedFoodForQty(null);
     }
-  };
-
-  const cancelSelection = () => {
-    setSelectedFood(null);
   };
 
   return (
@@ -108,52 +166,27 @@ export default function MealSlot({ label, items = [], options = [], onAddItem, o
           {label}
         </label>
         <button 
-          onClick={() => setShowModal(true)}
+          onClick={() => setShowFoodModal(true)}
           style={{ padding: '2px', background: 'none', border: 'none', color: '#6366f1', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
         >
           <Plus size={16} />
         </button>
       </div>
 
-      {showModal && (
+      {showFoodModal && (
         <FoodSelectorModal 
           options={options} 
-          onSelect={handleSelect} 
-          onClose={() => setShowModal(false)} 
+          onSelect={handleSelectFood} 
+          onClose={() => setShowFoodModal(false)} 
         />
       )}
 
-      {selectedFood && (
-        <div style={{ display: 'flex', gap: '4px', marginBottom: '8px', alignItems: 'center', backgroundColor: 'var(--bg-item)', padding: '4px', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
-          <span style={{ fontSize: '11px', fontWeight: 'bold', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-main)' }}>
-            {selectedFood.name}
-          </span>
-          <input 
-            type="number" 
-            value={amount} 
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="Cant."
-            style={{ width: '40px', padding: '2px', fontSize: '11px', border: '1px solid var(--border-color)', borderRadius: '2px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}
-          />
-          {!selectedFood.is_recipe && (
-            <input 
-              type="text" 
-              value={unit} 
-              onChange={(e) => setUnit(e.target.value)}
-              placeholder="Unid. (g, ml...)"
-              style={{ width: '60px', padding: '2px', fontSize: '11px', border: '1px solid var(--border-color)', borderRadius: '2px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}
-            />
-          )}
-          {selectedFood.is_recipe && (
-            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>unidades</span>
-          )}
-          <button onClick={confirmAdd} style={{ color: '#10b981', background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}>
-            <Check size={16} />
-          </button>
-          <button onClick={cancelSelection} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}>
-            <X size={16} />
-          </button>
-        </div>
+      {selectedFoodForQty && (
+        <QuantityModal 
+          food={selectedFoodForQty}
+          onConfirm={handleConfirmQty}
+          onCancel={() => setSelectedFoodForQty(null)}
+        />
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
