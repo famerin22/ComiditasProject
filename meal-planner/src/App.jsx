@@ -1,38 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { Utensils, ShoppingCart, User, Sun, Moon, X, CheckCircle2, Home, Share2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Utensils, ShoppingCart, User, Sun, Moon, X, CheckCircle2, Home, Share2, RefreshCcw, Cat } from 'lucide-react';
 import DayRow from './DayRow';
-import { getFoods, getSchedule, saveSchedule } from './mockDb';
+import * as db from './db';
 import FoodManager from './FoodManager';
+import { supabase } from './supabase';
 
 const DAYS = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'];
 
 function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClose }) {
-  const [boughtItems, setBoughtItems] = useState(() => {
-    const saved = localStorage.getItem('meal_planner_bought');
-    return saved ? JSON.parse(saved) : {};
-  });
-
-  const [extraItems, setExtraItems] = useState(() => {
-    const saved = localStorage.getItem('meal_planner_extras');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  const [boughtItems, setBoughtItems] = useState({});
+  const [extraItems, setExtraItems] = useState([]);
   const [newExtra, setNewExtra] = useState('');
 
-  useEffect(() => { localStorage.setItem('meal_planner_bought', JSON.stringify(boughtItems)); }, [boughtItems]);
-  useEffect(() => { localStorage.setItem('meal_planner_extras', JSON.stringify(extraItems)); }, [extraItems]);
+  useEffect(() => {
+    db.getExtras().then(setExtraItems);
+    db.getShoppingState().then(setBoughtItems);
+  }, []);
 
-  const addExtra = () => {
+  const addExtra = async () => {
     if (!newExtra.trim()) return;
-    setExtraItems([...extraItems, { id: Date.now(), name: newExtra.trim(), bought: false }]);
+    const item = await db.addExtra(newExtra.trim());
+    setExtraItems([...extraItems, item]);
     setNewExtra('');
   };
 
-  const toggleExtra = (id) => {
-    setExtraItems(extraItems.map(item => item.id === id ? { ...item, bought: !item.bought } : item));
+  const toggleExtra = async (id, currentBought) => {
+    await db.updateExtra(id, !currentBought);
+    setExtraItems(extraItems.map(item => item.id === id ? { ...item, bought: !currentBought } : item));
   };
 
-  const removeExtra = (id) => {
+  const removeExtra = async (id) => {
+    await db.deleteExtra(id);
     setExtraItems(extraItems.filter(item => item.id !== id));
   };
 
@@ -40,47 +38,45 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
     const totals = {};
     const usersToInclude = viewMode === 'combined' ? ['fer', 'meli'] : [viewMode];
 
+    const processItem = (itemName, itemAmount, isRecipe) => {
+      if (isRecipe) {
+        const recipeDef = dbOptions.find(f => f.name === itemName && f.is_recipe);
+        if (recipeDef && recipeDef.ingredients) {
+          recipeDef.ingredients.forEach(ing => {
+            const food = dbOptions.find(f => f.id === ing.id);
+            if (food) {
+              const neededAmount = Number(ing.amount) * Number(itemAmount);
+              processItem(food.name, neededAmount, food.is_recipe);
+            }
+          });
+        }
+      } else {
+        const foodDef = dbOptions.find(f => f.name === itemName);
+        const factor = foodDef?.conversion_factor || 1.0;
+        const unit = foodDef?.default_unit || 'g';
+        const rawAmount = Number(itemAmount) / factor;
+        const key = `${itemName}|${unit}`;
+        if (!totals[key]) totals[key] = { name: itemName, amount: 0, unit: unit, category: foodDef?.category || 'Otros' };
+        totals[key].amount += rawAmount;
+      }
+    };
+
     usersToInclude.forEach(u => {
       const userSchedule = schedules[u];
-      Object.values(userSchedule).forEach(dayData => {
-        Object.values(dayData).forEach(mealItems => {
-          mealItems.forEach(item => {
-            if (item.type === 'recipe') {
-              const recipeDef = dbOptions.find(f => f.name === item.name && f.is_recipe);
-              if (recipeDef && recipeDef.ingredients) {
-                recipeDef.ingredients.forEach(ing => {
-                  const food = dbOptions.find(f => f.id === ing.id);
-                  if (food) {
-                    const key = `${food.name}|${ing.unit}`;
-                    if (!totals[key]) totals[key] = { name: food.name, amount: 0, unit: ing.unit, category: food.category || 'Otros' };
-                    
-                    // Apply conversion factor for recipe ingredients
-                    const factor = food.conversion_factor || 1.0;
-                    const rawAmount = (Number(ing.amount) * Number(item.amount)) / factor;
-                    totals[key].amount += rawAmount;
-                  }
-                });
-              }
-            } else {
-              const key = `${item.name}|${item.unit}`;
-              if (!totals[key]) totals[key] = { name: item.name, amount: 0, unit: item.unit, category: item.category || 'Otros' };
-              
-              // Apply conversion factor: raw = cooked / factor
-              // Lookup from DB to ensure we have the latest factor
-              const foodDef = dbOptions.find(f => f.name === item.name);
-              const factor = foodDef?.conversion_factor || item.conversion_factor || 1.0;
-              const rawAmount = Number(item.amount) / factor;
-              totals[key].amount += rawAmount;
+      if (userSchedule) {
+        Object.values(userSchedule).forEach(dayData => {
+          Object.values(dayData).forEach(mealItems => {
+            if (Array.isArray(mealItems)) {
+              mealItems.forEach(item => processItem(item.name, item.amount, item.type === 'recipe'));
             }
           });
         });
-      });
+      }
     });
 
     const grouped = {};
     Object.values(totals).forEach(ing => {
       if (!grouped[ing.category]) grouped[ing.category] = [];
-      // Round to 1 decimal place
       ing.amount = Math.round(ing.amount * 10) / 10;
       grouped[ing.category].push(ing);
     });
@@ -93,22 +89,33 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
 
   const groupedIngredients = aggregateIngredients();
 
-  const toggleBought = (key) => {
-    setBoughtItems(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleBought = async (key) => {
+    const newVal = !boughtItems[key];
+    await db.updateShoppingState(key, newVal);
+    setBoughtItems(prev => ({ ...prev, [key]: newVal }));
   };
 
-  const clearBought = () => {
+  const clearBought = async () => {
     if (confirm('¿Vaciar los elementos marcados?')) {
+      await db.clearShoppingState();
+      await db.deleteBoughtExtras();
       setBoughtItems({});
       setExtraItems(extraItems.filter(i => !i.bought));
     }
   };
 
-  const markAllBought = () => {
+  const markAllBought = async () => {
     const newBought = { ...boughtItems };
+    const promises = [];
     groupedIngredients.forEach(group => {
-      group.items.forEach(ing => { newBought[`${ing.name}-${ing.unit}`] = true; });
+      group.items.forEach(ing => { 
+        const key = `${ing.name}-${ing.unit}`;
+        newBought[key] = true;
+        promises.push(db.updateShoppingState(key, true));
+      });
     });
+    extraItems.forEach(i => promises.push(db.updateExtra(i.id, true)));
+    await Promise.all(promises);
     setExtraItems(extraItems.map(i => ({ ...i, bought: true })));
     setBoughtItems(newBought);
   };
@@ -165,7 +172,7 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {extraItems.map(item => (
                 <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: '8px', backgroundColor: item.bought ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-item)', border: `1px solid ${item.bought ? '#10b981' : 'var(--border-color)'}` }}>
-                  <div onClick={() => toggleExtra(item.id)} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                  <div onClick={() => toggleExtra(item.id, item.bought)} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                     {item.bought ? <CheckCircle2 size={18} color="#10b981" /> : <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--border-color)' }} />}
                     <span style={{ fontSize: '14px', color: item.bought ? 'var(--text-muted)' : 'var(--text-main)', textDecoration: item.bought ? 'line-through' : 'none' }}>{item.name}</span>
                   </div>
@@ -213,14 +220,18 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
 
 function WeeklyStats({ schedule }) {
   const stats = {};
-  Object.values(schedule).forEach(day => {
-    Object.values(day).forEach(meal => {
-      meal.forEach(item => {
-        const cat = item.category || 'Otros';
-        stats[cat] = (stats[cat] || 0) + 1;
+  if (schedule) {
+    Object.values(schedule).forEach(day => {
+      Object.values(day).forEach(meal => {
+        if (Array.isArray(meal)) {
+          meal.forEach(item => {
+            const cat = item.category || 'Otros';
+            stats[cat] = (stats[cat] || 0) + 1;
+          });
+        }
       });
     });
-  });
+  }
 
   const CATEGORY_COLORS = {
     'Proteína': '#f87171', 'Carne': '#ef4444', 'Pasta': '#fbbf24',
@@ -244,56 +255,79 @@ function WeeklyStats({ schedule }) {
   );
 }
 
-const INITIAL_STATE = {
+const INITIAL_SCHEDULE = {
   fer: Object.fromEntries(DAYS.map(d => [d, { desayuno: [], almuerzo: [], merienda: [], cena: [] }])),
   meli: Object.fromEntries(DAYS.map(d => [d, { desayuno: [], almuerzo: [], merienda: [], cena: [] }]))
 };
 
 export default function App() {
   const [dbOptions, setDbOptions] = useState([]);
-  const [schedules, setSchedules] = useState(() => getSchedule(INITIAL_STATE));
+  const [schedules, setSchedules] = useState(INITIAL_SCHEDULE);
   const [activeUser, setActiveUser] = useState('fer');
   const [viewMode, setViewMode] = useState('combined');
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [showStats, setShowStats] = useState(false);
-  const [templates, setTemplates] = useState(() => JSON.parse(localStorage.getItem('meal_planner_templates') || '[]'));
   const [recentFoods, setRecentFoods] = useState(() => JSON.parse(localStorage.getItem('meal_planner_recent') || '[]'));
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => { setDbOptions(getFoods()); }, []);
-  useEffect(() => { saveSchedule(schedules); }, [schedules]);
-  useEffect(() => { localStorage.setItem('meal_planner_templates', JSON.stringify(templates)); }, [templates]);
-  useEffect(() => { localStorage.setItem('meal_planner_recent', JSON.stringify(recentFoods)); }, [recentFoods]);
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const foods = await db.getFoods();
+      setDbOptions(foods);
+      
+      const remoteSchedules = await db.getSchedules();
+      if (remoteSchedules) {
+        setSchedules(prev => ({ ...INITIAL_SCHEDULE, ...remoteSchedules }));
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
-    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-  }, [darkMode]);
+    loadData();
 
-  const handlePrint = () => window.print();
-  const exportData = () => {
-    const data = { db: localStorage.getItem('meal_planner_db'), schedule: localStorage.getItem('meal_planner_schedule'), extras: localStorage.getItem('meal_planner_extras') };
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `mealplan_backup.json`; a.click();
-  };
-  const importData = (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const data = JSON.parse(event.target.result);
-      if (data.db) localStorage.setItem('meal_planner_db', data.db);
-      if (data.schedule) localStorage.setItem('meal_planner_schedule', data.schedule);
-      if (data.extras) localStorage.setItem('meal_planner_extras', data.extras);
-      window.location.reload();
+    // REALTIME UPDATES
+    const foodChannel = supabase.channel('foods_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'foods' }, () => {
+        db.getFoods().then(setDbOptions);
+      }).subscribe();
+
+    const scheduleChannel = supabase.channel('schedules_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'schedules' }, () => {
+        db.getSchedules().then(res => res && setSchedules(prev => ({ ...INITIAL_SCHEDULE, ...res })));
+      }).subscribe();
+
+    return () => {
+      supabase.removeChannel(foodChannel);
+      supabase.removeChannel(scheduleChannel);
     };
-    reader.readAsText(file);
+  }, [loadData]);
+
+  useEffect(() => {
+    document.documentElement.classList.remove('dark', 'tortie');
+    if (theme !== 'light') document.documentElement.classList.add(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const modes = ['light', 'dark', 'tortie'];
+    const next = modes[(modes.indexOf(theme) + 1) % modes.length];
+    setTheme(next);
   };
 
-  const handleAddItem = (person, day, time, foodId, amount, unit) => {
-    const food = dbOptions.find(f => f.id === Number(foodId)); if (!food) return;
-    setRecentFoods(prev => [food.id, ...prev.filter(id => id !== food.id)].slice(0, 8));
+  const handleAddItem = async (person, day, time, foodId, amount, unit) => {
+    const food = dbOptions.find(f => f.id === Number(foodId) || f.id === foodId);
+    if (!food) return;
+    
+    const newRecent = [food.id, ...recentFoods.filter(id => id !== food.id)].slice(0, 8);
+    setRecentFoods(newRecent);
+    localStorage.setItem('meal_planner_recent', JSON.stringify(newRecent));
+
     const newItem = {
-      id: Date.now(), // eslint-disable-line react-hooks/purity
+      id: Date.now(),
       type: food.is_recipe ? 'recipe' : 'ingredient',
       name: food.name,
       category: food.category || 'Otros',
@@ -305,82 +339,92 @@ export default function App() {
         return detail ? `${detail.name} (${ing.amount}${ing.unit})` : null;
       }).filter(Boolean) : []
     };
-    setSchedules(prev => ({...prev, [person]: { ...prev[person], [day]: { ...prev[person][day], [time]: [...prev[person][day][time], newItem] }}}));
+
+    const currentItems = (schedules[person] && schedules[person][day] && schedules[person][day][time]) || [];
+    const updatedItems = [...currentItems, newItem];
+    
+    await db.saveMealItems(person, day, time, updatedItems);
+    setSchedules(prev => ({...prev, [person]: { ...prev[person], [day]: { ...prev[person][day], [time]: updatedItems }}}));
   };
 
-  const handleUpdateItem = (person, day, time, itemId, amount, unit) => {
-    setSchedules(prev => ({
-      ...prev,
-      [person]: {
-        ...prev[person],
-        [day]: {
-          ...prev[person][day],
-          [time]: prev[person][day][time].map(item => {
-            if (item.id === itemId) {
-              // Lookup original factor from db just in case
-              const foodDef = dbOptions.find(f => f.name === item.name);
-              return { ...item, amount, unit, conversion_factor: foodDef?.conversion_factor || item.conversion_factor || 1.0 };
-            }
-            return item;
-          })
-        }
+  const handleUpdateItem = async (person, day, time, itemId, amount, unit) => {
+    const updatedItems = schedules[person][day][time].map(item => {
+      if (item.id === itemId) {
+        const foodDef = dbOptions.find(f => f.name === item.name);
+        return { ...item, amount, unit, conversion_factor: foodDef?.conversion_factor || item.conversion_factor || 1.0 };
       }
-    }));
+      return item;
+    });
+
+    await db.saveMealItems(person, day, time, updatedItems);
+    setSchedules(prev => ({...prev, [person]: { ...prev[person], [day]: { ...prev[person][day], [time]: updatedItems }}}));
   };
 
-  const handleRemoveItem = (person, day, time, itemId) => {
-    setSchedules(prev => ({...prev, [person]: { ...prev[person], [day]: { ...prev[person][day], [time]: prev[person][day][time].filter(i => i.id !== itemId) }}}));
+  const handleRemoveItem = async (person, day, time, itemId) => {
+    const updatedItems = schedules[person][day][time].filter(i => i.id !== itemId);
+    await db.saveMealItems(person, day, time, updatedItems);
+    setSchedules(prev => ({...prev, [person]: { ...prev[person], [day]: { ...prev[person][day], [time]: updatedItems }}}));
   };
 
-  const handleCopyMeal = (day, time) => {
+  const handleCopyMeal = async (day, time) => {
     const otherUser = activeUser === 'fer' ? 'meli' : 'fer';
-    const itemsToCopy = schedules[activeUser][day][time].map(item => ({ ...item, id: Date.now() + Math.random() }));
+    const scale = activeUser === 'fer' ? 0.65 : 1.54;
+    const itemsToCopy = (schedules[activeUser] && schedules[activeUser][day] && schedules[activeUser][day][time] || []).map(item => ({ 
+      ...item, 
+      id: Date.now() + Math.random(),
+      amount: Math.round((parseFloat(item.amount) || 0) * scale * 10) / 10
+    }));
+    
     if (itemsToCopy.length === 0) return;
-    setSchedules(prev => ({...prev, [otherUser]: { ...prev[otherUser], [day]: { ...prev[otherUser][day], [time]: [...prev[otherUser][day][time], ...itemsToCopy] }}}));
-    alert(`Copiado a ${otherUser.toUpperCase()}`);
+    
+    const existingItems = (schedules[otherUser] && schedules[otherUser][day] && schedules[otherUser][day][time]) || [];
+    const updatedItems = [...existingItems, ...itemsToCopy];
+    
+    await db.saveMealItems(otherUser, day, time, updatedItems);
+    setSchedules(prev => ({...prev, [otherUser]: { ...prev[otherUser], [day]: { ...prev[otherUser][day], [time]: updatedItems }}}));
+    alert(`Copiado a ${otherUser.toUpperCase()} (Escalado x${scale})`);
   };
 
-  const handleCopyToTomorrow = (currentDay, time) => {
+  const handleCopyToTomorrow = async (currentDay, time) => {
     const currentIndex = DAYS.indexOf(currentDay);
     if (currentIndex === -1 || currentIndex === DAYS.length - 1) return alert("No hay mañana.");
     const tomorrow = DAYS[currentIndex + 1];
-    const itemsToCopy = schedules[activeUser][currentDay][time].map(item => ({ ...item, id: Date.now() + Math.random() }));
+    const itemsToCopy = (schedules[activeUser] && schedules[activeUser][currentDay] && schedules[activeUser][currentDay][time] || []).map(item => ({ ...item, id: Date.now() + Math.random() }));
+    
     if (itemsToCopy.length === 0) return;
-    setSchedules(prev => ({...prev, [activeUser]: { ...prev[activeUser], [tomorrow]: { ...prev[activeUser][tomorrow], [time]: [...prev[activeUser][tomorrow][time], ...itemsToCopy] }}}));
+    
+    const existingItems = (schedules[activeUser] && schedules[activeUser][tomorrow] && schedules[activeUser][tomorrow][time]) || [];
+    const updatedItems = [...existingItems, ...itemsToCopy];
+    
+    await db.saveMealItems(activeUser, tomorrow, time, updatedItems);
+    setSchedules(prev => ({...prev, [activeUser]: { ...prev[activeUser], [tomorrow]: { ...prev[activeUser][tomorrow], [time]: updatedItems }}}));
     alert(`Copiado al ${tomorrow}`);
   };
 
-  const handleClearDay = (day) => {
-    if (confirm(`¿Vaciar ${day}?`)) setSchedules(prev => ({...prev, [activeUser]: { ...prev[activeUser], [day]: { desayuno: [], almuerzo: [], merienda: [], cena: [] }}}));
+  const handleClearDay = async (day) => {
+    if (confirm(`¿Vaciar ${day}?`)) {
+      await db.clearDaySchedule(activeUser, day);
+      setSchedules(prev => ({...prev, [activeUser]: { ...prev[activeUser], [day]: { desayuno: [], almuerzo: [], merienda: [], cena: [] }}}));
+    }
   };
 
   const shareWeeklyMenu = () => {
     const schedule = schedules[activeUser];
+    if (!schedule) return;
     let text = `📅 *MENÚ SEMANAL (${activeUser.toUpperCase()})*\n\n`;
     DAYS.forEach(day => {
-      const meals = schedule[day];
-      if (meals.almuerzo.length || meals.cena.length) {
+      const meals = schedule[day] || {};
+      if ((meals.almuerzo?.length) || (meals.cena?.length)) {
         text += `*${day.toUpperCase()}*\n`;
-        if (meals.desayuno.length) text += `☕ ${meals.desayuno.map(i => i.name).join(', ')}\n`;
-        if (meals.almuerzo.length) text += `🍴 ${meals.almuerzo.map(i => i.name).join(', ')}\n`;
-        if (meals.merienda.length) text += `🍪 ${meals.merienda.map(i => i.name).join(', ')}\n`;
-        if (meals.cena.length) text += `🌙 ${meals.cena.map(i => i.name).join(', ')}\n`;
+        if (meals.desayuno?.length) text += `☕ ${meals.desayuno.map(i => i.name).join(', ')}\n`;
+        if (meals.almuerzo?.length) text += `🍴 ${meals.almuerzo.map(i => i.name).join(', ')}\n`;
+        if (meals.merienda?.length) text += `🍪 ${meals.merienda.map(i => i.name).join(', ')}\n`;
+        if (meals.cena?.length) text += `🌙 ${meals.cena.map(i => i.name).join(', ')}\n`;
         text += `\n`;
       }
     });
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
-
-  const saveAsTemplate = () => {
-    const name = prompt('Nombre de la plantilla:'); if (!name) return;
-    setTemplates([...templates, { id: Date.now(), name, schedule: schedules[activeUser] }]);
-  };
-
-  const loadTemplate = (template) => {
-    if (confirm(`¿Cargar "${template.name}"?`)) setSchedules(prev => ({ ...prev, [activeUser]: template.schedule }));
-  };
-
-  const deleteTemplate = (id) => { if (confirm('¿Borrar?')) setTemplates(templates.filter(t => t.id !== id)); };
 
   const getTodayName = () => ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'][new Date().getDay()];
   const todayName = getTodayName();
@@ -388,6 +432,15 @@ export default function App() {
 
   return (
     <div style={{ padding: '10px 15px', minHeight: '100vh', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', transition: '0.3s' }}>
+      {isLoading && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+            <RefreshCcw className="animate-spin" size={32} />
+            <span>Cargando...</span>
+          </div>
+        </div>
+      )}
+      
       {isPrepDay && (
         <div style={{ 
           backgroundColor: '#6366f1', color: 'white', padding: '12px', borderRadius: '12px', 
@@ -401,13 +454,17 @@ export default function App() {
       <header style={{ marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' }}><Utensils size={28} /> MealPlan Pro</h1>
-          <button onClick={() => setDarkMode(!darkMode)} style={{ padding: '10px', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>{darkMode ? <Sun size={20} /> : <Moon size={20} />}</button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={toggleTheme} style={{ padding: '10px', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {theme === 'light' && <Sun size={20} />}
+              {theme === 'dark' && <Moon size={20} />}
+              {theme === 'tortie' && <Cat size={20} color="#f59e0b" />}
+            </button>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <FoodManager onDatabaseChange={setDbOptions} />
-          <button onClick={exportData} style={{ padding: '10px', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>📥</button>
-          <label style={{ padding: '10px', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer' }}>📤<input type="file" onChange={importData} style={{ display: 'none' }} /></label>
-          <button onClick={() => setShowShoppingList(true)} style={{ flex: 1, minWidth: '120px', padding: '10px 15px', backgroundColor: '#ff6b35', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}><ShoppingCart size={18} /> Lista</button>
+          <button onClick={() => setShowShoppingList(true)} style={{ flex: 1, minWidth: '120px', padding: '10px 15px', backgroundColor: '#ff6b35', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', cursor: 'pointer' }}><ShoppingCart size={18} /> Lista</button>
         </div>
       </header>
 
@@ -424,33 +481,35 @@ export default function App() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', gap: '10px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={shareWeeklyMenu} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #25D366', color: '#25D366', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>Compartir</button>
-          <button onClick={handlePrint} className="no-print" style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--text-muted)', color: 'var(--text-main)', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>🖨️ Imprimir</button>
           <button onClick={() => setShowStats(!showStats)} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #6366f1', color: '#6366f1', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>{showStats ? '📊 Ocultar Stats' : '📊 Ver Stats'}</button>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={saveAsTemplate} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #6366f1', color: '#6366f1', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>💾 Guardar</button>
-          <button onClick={() => { if(confirm('¿Vaciar semana?')) setSchedules(prev => ({...prev, [activeUser]: Object.fromEntries(DAYS.map(d => [d, { desayuno: [], almuerzo: [], merienda: [], cena: [] }]))})) }} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #ef4444', color: '#ef4444', backgroundColor: 'transparent', cursor: 'pointer' }}>Vaciar</button>
+          <button onClick={async () => { if(confirm('¿Vaciar semana?')) {
+            for (const day of DAYS) { await db.clearDaySchedule(activeUser, day); }
+            setSchedules(prev => ({...prev, [activeUser]: Object.fromEntries(DAYS.map(d => [d, { desayuno: [], almuerzo: [], merienda: [], cena: [] }]))}));
+          }}} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #ef4444', color: '#ef4444', backgroundColor: 'transparent', cursor: 'pointer' }}>Vaciar</button>
         </div>
       </div>
 
       {showStats && <WeeklyStats schedule={schedules[activeUser]} />}
 
-      {templates.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Mis Plantillas</div>
-          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px', whiteSpace: 'nowrap' }}>
-            {templates.map(t => (
-              <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'var(--bg-card)', padding: '5px 10px', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
-                <span onClick={() => loadTemplate(t)} style={{ cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>{t.name}</span>
-                <X size={14} onClick={() => deleteTemplate(t.id)} style={{ cursor: 'pointer', color: '#ef4444' }} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
-        {DAYS.map(day => <DayRow key={day} day={day} isToday={day === todayName} data={schedules[activeUser][day]} options={dbOptions} onAddItem={(time, foodId, amount, unit) => handleAddItem(activeUser, day, time, foodId, amount, unit)} onRemoveItem={(time, itemId) => handleRemoveItem(activeUser, day, time, itemId)} onUpdateItem={(time, id, amount, unit) => handleUpdateItem(activeUser, day, time, id, amount, unit)} onCopyMeal={handleCopyMeal} onCopyToTomorrow={handleCopyToTomorrow} onClearDay={handleClearDay} recentFoods={recentFoods} />)}
+        {DAYS.map(day => (
+          <DayRow 
+            key={day} 
+            day={day} 
+            isToday={day === todayName} 
+            data={schedules[activeUser]?.[day] || { desayuno: [], almuerzo: [], merienda: [], cena: [] }} 
+            options={dbOptions} 
+            onAddItem={(time, foodId, amount, unit) => handleAddItem(activeUser, day, time, foodId, amount, unit)} 
+            onRemoveItem={(time, itemId) => handleRemoveItem(activeUser, day, time, itemId)} 
+            onUpdateItem={(time, id, amount, unit) => handleUpdateItem(activeUser, day, time, id, amount, unit)} 
+            onCopyMeal={handleCopyMeal} 
+            onCopyToTomorrow={handleCopyToTomorrow} 
+            onClearDay={handleClearDay} 
+            recentFoods={recentFoods} 
+          />
+        ))}
       </div>
     </div>
   );

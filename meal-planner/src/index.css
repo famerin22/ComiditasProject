@@ -46,6 +46,52 @@
   --text-tag: #bfdbfe;
 }
 
+:root.tortie {
+  color-scheme: dark;
+  
+  --bg-main: #1a1a1a; /* Deep Charcoal/Black */
+  --bg-card: #2d2424; /* Brindled dark brown */
+  --bg-input: #3d2b1f; /* Dark mahogany */
+  --bg-item: #4a3728; /* Brindled wood */
+  --bg-tag: #d97706; /* Rich Ginger/Orange */
+  
+  --border-color: #5c4033;
+  --border-card: #3d2b1f;
+  
+  --text-main: #fef3c7; /* Warm Cream */
+  --text-title: #f59e0b; /* Bright Ginger */
+  --text-muted: #a8a29e; /* Soft fur grey */
+  --text-tag: #1a1a1a; /* Contrast black for tags */
+}
+
+:root.tortie {
+  color-scheme: dark;
+  
+  --bg-main: #1a1a1a; /* Deep Charcoal/Black */
+  --bg-card: #2d2424; /* Brindled dark brown */
+  --bg-input: #3d2b1f; /* Dark mahogany */
+  --bg-item: #4a3728; /* Brindled wood */
+  --bg-tag: #d97706; /* Rich Ginger/Orange */
+  
+  --border-color: #5c4033;
+  --border-card: #3d2b1f;
+  
+  --text-main: #fef3c7; /* Warm Cream */
+  --text-title: #f59e0b; /* Bright Ginger */
+  --text-muted: #a8a29e; /* Soft fur grey */
+  --text-tag: #1a1a1a; /* Contrast black for tags */
+}
+
+:root.tortie body {
+  background-color: var(--bg-main);
+  background-image: none;
+}
+
+/* Ensure no pseudo-elements exist */
+:root.tortie::before {
+  display: none;
+}
+
 body {
   margin: 0;
   min-width: 320px;

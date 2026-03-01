@@ -152,9 +152,17 @@ function FoodSelectorModal({ options, recentFoods = [], onSelect, onClose }) {
   );
 }
 
-function QuantityModal({ food, onConfirm, onCancel, initialAmount = '1', initialUnit = '' }) {
+function QuantityModal({ food, onConfirm, onCancel, initialAmount = '', initialUnit = '' }) {
   const [amount, setAmount] = useState(initialAmount);
   const [unit, setUnit] = useState(initialUnit || food.default_unit || (food.is_recipe ? 'unidades' : 'g'));
+  const inputRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, []);
 
   return (
     <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '15px' }}>
@@ -176,7 +184,14 @@ function QuantityModal({ food, onConfirm, onCancel, initialAmount = '1', initial
                   </span>
                 )}
               </div>
-              <input type="number" autoFocus inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box', fontSize: '16px' }} />
+              <input 
+                ref={inputRef}
+                type="number" 
+                inputMode="decimal" 
+                value={amount} 
+                onChange={(e) => setAmount(e.target.value)} 
+                style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box', fontSize: '16px' }} 
+              />
             </div>
 
             <div>
@@ -257,7 +272,7 @@ export default function MealSlot({ label, items = [], options = [], onAddItem, o
       {selectedFoodForQty && (
         <QuantityModal 
           food={selectedFoodForQty}
-          initialAmount={editingItem ? editingItem.amount : '1'}
+          initialAmount={editingItem ? editingItem.amount : ''}
           initialUnit={editingItem ? editingItem.unit : (selectedFoodForQty.default_unit || 'g')}
           onConfirm={handleConfirmQty}
           onCancel={() => { setSelectedFoodForQty(null); setEditingItem(null); }}

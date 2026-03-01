@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, X, Check, Database, Search, UtensilsCrossed, Tag, BookOpen, Star, Scale } from 'lucide-react';
-import { addFood, updateFood, deleteFood, getFoods, CATEGORIES, getSuggestedFactor } from './mockDb';
+import React, { useState, useMemo } from 'react';
+import { Plus, Edit2, Trash2, X, Check, Database, Search, UtensilsCrossed, Tag, BookOpen, Star, Scale, AlertCircle } from 'lucide-react';
+import * as db from './db';
+import { CATEGORIES, getSuggestedFactor } from './mockDb';
+import { normalizeText, getSimilarity } from './utils';
 
-function RecipeIngredientEditor({ ingredients = [], allFoods = [], onUpdate }) {
+function RecipeIngredientEditor({ ingredients = [], allFoods = [], onUpdate, currentFoodId }) {
   const [showAdd, setShowAdd] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFood, setSelectedFood] = useState(null);
   const [amount, setAmount] = useState('1');
   const [unit, setUnit] = useState('');
 
-  const availableIngredients = allFoods.filter(f => !f.is_recipe);
+  const availableIngredients = allFoods.filter(f => f.id !== currentFoodId);
   const filtered = availableIngredients.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleAdd = (food) => {
@@ -102,18 +104,42 @@ function RecipeIngredientEditor({ ingredients = [], allFoods = [], onUpdate }) {
 }
 
 export default function FoodManager({ onDatabaseChange }) {
-  const [foods, setFoods] = useState(getFoods());
+  const [foods, setFoods] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '', favorite: false, conversion_factor: 1.0 });
   const [showMainModal, setShowMainModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const refresh = () => {
-    const updated = getFoods();
+  const refresh = async () => {
+    const updated = await db.getFoods();
     setFoods(updated);
     onDatabaseChange(updated);
   };
+
+  React.useEffect(() => {
+    if (showMainModal) refresh();
+  }, [showMainModal]);
+
+  const normalizedFoods = useMemo(() => {
+    return foods.map(f => ({ ...f, _normalized: normalizeText(f.name) }));
+  }, [foods]);
+
+  const duplicates = useMemo(() => {
+    if (!formData.name.trim()) return [];
+    const normalizedName = normalizeText(formData.name);
+    return normalizedFoods.filter(f => f._normalized === normalizedName && f.id !== editingId);
+  }, [formData.name, normalizedFoods, editingId]);
+
+  const similarities = useMemo(() => {
+    if (!formData.name.trim() || duplicates.length > 0) return [];
+    return normalizedFoods
+      .filter(f => f.id !== editingId)
+      .map(f => ({ ...f, score: getSimilarity(formData.name, f.name) }))
+      .filter(f => f.score >= 0.6)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+  }, [formData.name, normalizedFoods, editingId, duplicates]);
 
   const handleNameChange = (e) => {
     const name = e.target.value;
@@ -121,12 +147,16 @@ export default function FoodManager({ onDatabaseChange }) {
     setFormData({ ...formData, name, conversion_factor: factor });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name.trim()) return;
+    if (duplicates.length > 0) {
+      alert(`El alimento "${duplicates[0].name}" ya existe en la base de datos.`);
+      return;
+    }
     if (editingId) {
-      updateFood(editingId, formData);
+      await db.updateFood(editingId, formData);
     } else {
-      addFood(formData);
+      await db.addFood(formData);
     }
     setFormData({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '', favorite: false, conversion_factor: 1.0 });
     setIsAdding(false);
@@ -134,8 +164,8 @@ export default function FoodManager({ onDatabaseChange }) {
     refresh();
   };
 
-  const toggleQuickFav = (food) => {
-    updateFood(food.id, { ...food, favorite: !food.favorite });
+  const toggleQuickFav = async (food) => {
+    await db.updateFood(food.id, { ...food, favorite: !food.favorite });
     refresh();
   };
 
@@ -154,9 +184,9 @@ export default function FoodManager({ onDatabaseChange }) {
     setIsAdding(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('¿Borrar este alimento?')) {
-      deleteFood(id);
+      await db.deleteFood(id);
       refresh();
     }
   };
@@ -200,29 +230,29 @@ export default function FoodManager({ onDatabaseChange }) {
 
               {isAdding && (
                 <div style={{ backgroundColor: 'var(--bg-item)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '20px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', alignItems: 'flex-end' }}>
-                    <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '15px', alignItems: 'flex-end' }}>
+                    <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nombre</span>
-                      <input type="text" value={formData.name} onChange={handleNameChange} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }} />
+                      <input type="text" value={formData.name} onChange={handleNameChange} style={{ width: '100%', padding: '10px', border: `1px solid ${duplicates.length > 0 ? '#ef4444' : 'var(--border-color)'}`, borderRadius: '6px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box' }} />
                     </div>
-                    <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Categoría</span>
-                      <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}>
+                      <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box', height: '38px' }}>
                         {CATEGORIES.map(cat => <option key={cat.name} value={cat.name}>{cat.icon} {cat.name}</option>)}
                       </select>
                     </div>
-                    <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Unidad</span>
-                      <input type="text" disabled={formData.is_recipe} value={formData.is_recipe ? 'unidades' : formData.default_unit} onChange={(e) => setFormData({ ...formData, default_unit: e.target.value })} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: formData.is_recipe ? 'rgba(0,0,0,0.05)' : 'var(--bg-input)', color: 'var(--text-main)' }} />
+                      <input type="text" disabled={formData.is_recipe} value={formData.is_recipe ? 'unidades' : formData.default_unit} onChange={(e) => setFormData({ ...formData, default_unit: e.target.value })} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: formData.is_recipe ? 'rgba(0,0,0,0.05)' : 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box' }} />
                     </div>
-                    <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Factor (Cocido/Crudo)</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Scale size={14} color="var(--text-muted)" />
-                        <input type="number" step="0.05" value={formData.conversion_factor} onChange={(e) => setFormData({ ...formData, conversion_factor: parseFloat(e.target.value) || 1 })} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }} />
+                      <div style={{ position: 'relative', width: '100%' }}>
+                        <Scale size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }} />
+                        <input type="number" step="0.05" value={formData.conversion_factor} onChange={(e) => setFormData({ ...formData, conversion_factor: parseFloat(e.target.value) || 1 })} style={{ width: '100%', padding: '10px 10px 10px 30px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box' }} />
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', height: '40px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', height: '38px' }}>
                       <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-main)', cursor: 'pointer' }}>
                         <input type="checkbox" checked={formData.is_recipe} onChange={(e) => setFormData({ ...formData, is_recipe: e.target.checked, default_unit: e.target.checked ? 'unidades' : 'g' })} /> Receta
                       </label>
@@ -231,15 +261,40 @@ export default function FoodManager({ onDatabaseChange }) {
                       </label>
                     </div>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                      <button onClick={handleSave} style={{ padding: '10px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}><Check size={20}/></button>
-                      <button onClick={cancel} style={{ padding: '10px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}><X size={20}/></button>
+                      <button onClick={handleSave} disabled={duplicates.length > 0} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '10px 18px', backgroundColor: duplicates.length > 0 ? '#94a3b8' : '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: duplicates.length > 0 ? 'not-allowed' : 'pointer', fontWeight: 'bold', height: '38px' }}>
+                        {duplicates.length > 0 ? 'Bloqueado' : <Check size={20}/>}
+                      </button>
+                      <button onClick={cancel} style={{ padding: '10px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', height: '38px' }}><X size={20}/></button>
                     </div>
                   </div>
+
+                  {duplicates.length > 0 && (
+                    <div style={{ marginTop: '10px', padding: '10px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <AlertCircle size={16} />
+                      <span>Ya existe un alimento con este nombre: <strong>{duplicates[0].name}</strong> ({duplicates[0].category})</span>
+                    </div>
+                  )}
+
+                  {similarities.length > 0 && (
+                    <div style={{ marginTop: '10px', padding: '10px', backgroundColor: 'var(--bg-item)', border: '1px solid #fbbf24', borderRadius: '8px', fontSize: '13px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#d97706' }}>
+                        <AlertCircle size={16} />
+                        <span style={{ fontWeight: 'bold' }}>¿Quisiste decir alguno de estos?</span>
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {similarities.map(s => (
+                          <button key={s.id} onClick={() => startEdit(s)} style={{ padding: '6px 10px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '4px', transition: '0.2s' }}>
+                            <Search size={12} /> {s.name} <span style={{ opacity: 0.6, fontSize: '10px' }}>({s.category})</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {formData.is_recipe && (
                     <div style={{ marginTop: '15px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}><BookOpen size={14} /> Instrucciones</span>
                       <textarea value={formData.instructions} onChange={(e) => setFormData({ ...formData, instructions: e.target.value })} style={{ width: '100%', height: '80px', padding: '10px', marginTop: '5px', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '14px', resize: 'none' }} />
-                      <RecipeIngredientEditor ingredients={formData.ingredients} allFoods={foods} onUpdate={(newIngs) => setFormData({ ...formData, ingredients: newIngs })} />
+                      <RecipeIngredientEditor ingredients={formData.ingredients} allFoods={foods} onUpdate={(newIngs) => setFormData({ ...formData, ingredients: newIngs })} currentFoodId={editingId} />
                     </div>
                   )}
                 </div>
