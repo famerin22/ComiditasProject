@@ -57,13 +57,14 @@ export const CATEGORIES = [
 ];
 
 // Derived from mealdata.csv
+// Factor formula: cooked = raw * factor  =>  raw = cooked / factor
 const COMMON_FACTORS = [
   { regex: /pollo|chicken|ave/i, factor: 0.75 },
   { regex: /vaca|carne|beef|steak|picada/i, factor: 0.70 },
   { regex: /cerdo|pork/i, factor: 0.75 },
   { regex: /pescado|salmon|merluza|fish/i, factor: 0.80 },
-  { regex: /arroz|rice|quinoa/i, factor: 3.00 },
-  { regex: /fideo|pasta|spaghetti|penne/i, factor: 2.25 },
+  { regex: /arroz|rice|quinoa/i, factor: 2.50 }, // Cooked is ~2.5x raw
+  { regex: /fideo|pasta|spaghetti|penne/i, factor: 2.25 }, // Cooked is ~2.25x raw
   { regex: /lenteja|poroto|legumbre|bean|lentil/i, factor: 2.20 },
   { regex: /espinaca|kale|acelga/i, factor: 0.20 },
   { regex: /hongo|champi/i, factor: 0.50 },

@@ -130,6 +130,9 @@ function FoodSelectorModal({ options, recentFoods = [], onSelect, onClose }) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {food.favorite && <Star size={12} fill="#fbbf24" color="#fbbf24" />}
                         {food.name}
+                        {food.conversion_factor && food.conversion_factor !== 1 && (
+                          <span style={{ fontSize: '10px', color: '#10b981', marginLeft: '5px' }}>x{food.conversion_factor}</span>
+                        )}
                       </div>
                       <div style={{ fontSize: '10px', marginTop: '2px' }}>
                         <span style={{ padding: '1px 4px', borderRadius: '3px', backgroundColor: food.is_recipe ? 'var(--bg-tag)' : 'rgba(0,0,0,0.05)', color: food.is_recipe ? 'var(--text-tag)' : 'var(--text-muted)' }}>{food.is_recipe ? 'Receta' : 'Ingrediente'}</span>

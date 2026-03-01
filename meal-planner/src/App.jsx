@@ -54,10 +54,10 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
                     const key = `${food.name}|${ing.unit}`;
                     if (!totals[key]) totals[key] = { name: food.name, amount: 0, unit: ing.unit, category: food.category || 'Otros' };
                     
-                    // Conversion factor for recipes is complex as it's a fixed dish, 
-                    // but the ingredients themselves might have factors. 
-                    // For now, we multiply recipe units by ingredient amount.
-                    totals[key].amount += Number(ing.amount) * Number(item.amount);
+                    // Apply conversion factor for recipe ingredients
+                    const factor = food.conversion_factor || 1.0;
+                    const rawAmount = (Number(ing.amount) * Number(item.amount)) / factor;
+                    totals[key].amount += rawAmount;
                   }
                 });
               }
@@ -66,7 +66,9 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
               if (!totals[key]) totals[key] = { name: item.name, amount: 0, unit: item.unit, category: item.category || 'Otros' };
               
               // Apply conversion factor: raw = cooked / factor
-              const factor = item.conversion_factor || 1.0;
+              // Lookup from DB to ensure we have the latest factor
+              const foodDef = dbOptions.find(f => f.name === item.name);
+              const factor = foodDef?.conversion_factor || item.conversion_factor || 1.0;
               const rawAmount = Number(item.amount) / factor;
               totals[key].amount += rawAmount;
             }
