@@ -94,7 +94,21 @@ export const getSchedule = (defaultSchedule) => {
 
   if (saved) {
     try {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      // Safeguard: Ensure all users and days have all 4 meal slots
+      ['fer', 'meli'].forEach(person => {
+        if (parsed[person]) {
+          Object.keys(parsed[person]).forEach(day => {
+            const meals = ['desayuno', 'almuerzo', 'merienda', 'cena'];
+            meals.forEach(meal => {
+              if (!parsed[person][day][meal]) {
+                parsed[person][day][meal] = [];
+              }
+            });
+          });
+        }
+      });
+      return parsed;
     } catch (e) {
       return defaultSchedule;
     }

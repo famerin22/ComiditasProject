@@ -1,28 +1,116 @@
 import React, { useState, useEffect } from 'react';
-import { Utensils, ShoppingCart, User, Sun, Moon } from 'lucide-react';
+import { Utensils, ShoppingCart, User, Sun, Moon, X, CheckCircle2 } from 'lucide-react';
 import DayRow from './DayRow';
 import { getFoods, getSchedule, saveSchedule } from './mockDb';
 import FoodManager from './FoodManager';
 
 const DAYS = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'];
 
-const createEmptySchedule = () => {
-  const s = {};
-  DAYS.forEach(day => {
-    s[day] = { desayuno: [], almuerzo: [], merienda: [], cena: [] };
-  });
-  return s;
-};
+function ShoppingListModal({ schedule, dbOptions, onClose }) {
+  const [boughtItems, setBoughtItems] = useState({});
 
-const INITIAL_STATE = {
-  fer: createEmptySchedule(),
-  meli: createEmptySchedule()
-};
+  const aggregateIngredients = () => {
+    const totals = {}; // { "Nombre (Unidad)": { amount: 0, unit: '' } }
+
+    Object.values(schedule).forEach(dayData => {
+      Object.values(dayData).forEach(mealItems => {
+        mealItems.forEach(item => {
+          if (item.type === 'recipe') {
+            // Find recipe in DB to get original ingredients with IDs
+            const recipeDef = dbOptions.find(f => f.name === item.name && f.is_recipe);
+            if (recipeDef && recipeDef.ingredients) {
+              recipeDef.ingredients.forEach(ing => {
+                const food = dbOptions.find(f => f.id === ing.id);
+                if (food) {
+                  const key = `${food.name}|${ing.unit}`;
+                  if (!totals[key]) totals[key] = { name: food.name, amount: 0, unit: ing.unit };
+                  // Multiply ingredient amount by number of recipe units
+                  totals[key].amount += Number(ing.amount) * Number(item.amount);
+                }
+              });
+            }
+          } else {
+            const key = `${item.name}|${item.unit}`;
+            if (!totals[key]) totals[key] = { name: item.name, amount: 0, unit: item.unit };
+            totals[key].amount += Number(item.amount);
+          }
+        });
+      });
+    });
+
+    return Object.values(totals).sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  const ingredients = aggregateIngredients();
+
+  const toggleBought = (key) => {
+    setBoughtItems(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200, padding: '15px' }}>
+      <div style={{ backgroundColor: 'var(--bg-card)', width: '100%', maxWidth: '500px', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', maxHeight: '85vh' }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid var(--border-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: 'var(--text-title)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <ShoppingCart /> Lista de Compras
+          </h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+            <X size={24} />
+          </button>
+        </div>
+        
+        <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+          {ingredients.length === 0 ? (
+            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px 0' }}>
+              No hay alimentos agregados al menú.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {ingredients.map((ing, idx) => {
+                const key = `${ing.name}-${ing.unit}`;
+                const isBought = boughtItems[key];
+                return (
+                  <div 
+                    key={idx} 
+                    onClick={() => toggleBought(key)}
+                    style={{ 
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                      padding: '12px 15px', borderRadius: '10px', backgroundColor: isBought ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-item)', 
+                      border: `1px solid ${isBought ? '#10b981' : 'var(--border-color)'}`,
+                      cursor: 'pointer', transition: '0.2s'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      {isBought ? <CheckCircle2 size={20} color="#10b981" /> : <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid var(--border-color)' }} />}
+                      <span style={{ color: isBought ? 'var(--text-muted)' : 'var(--text-main)', textDecoration: isBought ? 'line-through' : 'none', fontWeight: isBought ? 'normal' : '500' }}>
+                        {ing.name}
+                      </span>
+                    </div>
+                    <span style={{ fontWeight: 'bold', color: isBought ? 'var(--text-muted)' : '#6366f1', fontSize: '14px' }}>
+                      {ing.amount} {ing.unit}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        
+        <div style={{ padding: '15px', borderTop: '1px solid var(--border-card)' }}>
+          <button onClick={onClose} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: '#6366f1', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [dbOptions, setDbOptions] = useState([]);
   const [schedules, setSchedules] = useState(() => getSchedule(INITIAL_STATE));
   const [activeUser, setActiveUser] = useState('fer');
+  const [showShoppingList, setShowShoppingList] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
   });
@@ -118,11 +206,22 @@ export default function App() {
 
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', width: '100%' }}>
           <FoodManager onDatabaseChange={setDbOptions} />
-          <button style={{ flex: 1, minWidth: '140px', padding: '10px 15px', backgroundColor: '#ff6b35', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}>
+          <button 
+            onClick={() => setShowShoppingList(true)}
+            style={{ flex: 1, minWidth: '140px', padding: '10px 15px', backgroundColor: '#ff6b35', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}
+          >
             <ShoppingCart size={18} /> <span style={{ whiteSpace: 'nowrap' }}>Lista de Compras</span>
           </button>
         </div>
       </header>
+
+      {showShoppingList && (
+        <ShoppingListModal 
+          schedule={schedules[activeUser]} 
+          dbOptions={dbOptions}
+          onClose={() => setShowShoppingList(false)} 
+        />
+      )}
 
       {/* USER TABS */}
       <div style={{ display: 'flex', backgroundColor: 'var(--bg-card)', padding: '5px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border-color)' }}>
