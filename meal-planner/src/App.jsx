@@ -266,6 +266,40 @@ export default function App() {
     window.print();
   };
 
+  const exportData = () => {
+    const data = {
+      db: localStorage.getItem('meal_planner_db'),
+      schedule: localStorage.getItem('meal_planner_schedule'),
+      extras: localStorage.getItem('meal_planner_extras'),
+      theme: localStorage.getItem('theme')
+    };
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mealplan_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+  };
+
+  const importData = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (data.db) localStorage.setItem('meal_planner_db', data.db);
+        if (data.schedule) localStorage.setItem('meal_planner_schedule', data.schedule);
+        if (data.extras) localStorage.setItem('meal_planner_extras', data.extras);
+        alert('Datos importados con éxito. La página se recargará.');
+        window.location.reload();
+      } catch (err) {
+        alert('Error al importar el archivo.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleAddItem = (person, day, time, foodId, amount, unit) => {
     const food = dbOptions.find(f => f.id === Number(foodId));
     if (!food) return;
@@ -368,17 +402,43 @@ export default function App() {
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <FoodManager onDatabaseChange={setDbOptions} />
-          <button onClick={() => setShowShoppingList(true)} style={{ flex: 1, minWidth: '140px', padding: '10px 15px', backgroundColor: '#ff6b35', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-            <ShoppingCart size={18} /> Lista de Compras
+          <button onClick={exportData} style={{ padding: '10px', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '14px', cursor: 'pointer' }} title="Exportar Copia Seguridad">📥</button>
+          <label style={{ padding: '10px', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '14px', cursor: 'pointer' }} title="Importar Copia Seguridad">
+            📤<input type="file" onChange={importData} style={{ display: 'none' }} />
+          </label>
+          <button onClick={() => setShowShoppingList(true)} style={{ flex: 1, minWidth: '120px', padding: '10px 15px', backgroundColor: '#ff6b35', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+            <ShoppingCart size={18} /> Lista
           </button>
         </div>
       </header>
 
       {showShoppingList && <ShoppingListModal schedules={schedules} dbOptions={dbOptions} viewMode={viewMode} setViewUser={setViewMode} onClose={() => setShowShoppingList(false)} />}
 
-      <div style={{ display: 'flex', gap: '5px', backgroundColor: 'var(--bg-card)', padding: '5px', borderRadius: '12px', marginBottom: '15px', border: '1px solid var(--border-color)' }}>
-        <button onClick={() => setActiveUser('fer')} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', backgroundColor: activeUser === 'fer' ? '#6366f1' : 'transparent', color: activeUser === 'fer' ? 'white' : 'var(--text-muted)', cursor: 'pointer' }}>Fer</button>
-        <button onClick={() => setActiveUser('meli')} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', backgroundColor: activeUser === 'meli' ? '#ec4899' : 'transparent', color: activeUser === 'meli' ? 'white' : 'var(--text-muted)', cursor: 'pointer' }}>Meli</button>
+      <div style={{ display: 'flex', gap: '8px', backgroundColor: 'var(--bg-card)', padding: '6px', borderRadius: '14px', marginBottom: '15px', border: '1px solid var(--border-color)' }}>
+        <button 
+          onClick={() => setActiveUser('fer')}
+          style={{ 
+            flex: 1, padding: '10px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px',
+            backgroundColor: activeUser === 'fer' ? '#6366f1' : 'transparent',
+            color: activeUser === 'fer' ? 'white' : 'var(--text-muted)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', transition: '0.2s'
+          }}
+        >
+          <div style={{ width: 24, height: 24, borderRadius: '50%', backgroundColor: activeUser === 'fer' ? 'rgba(255,255,255,0.2)' : '#6366f1', color: activeUser === 'fer' ? 'white' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>F</div>
+          Fer
+        </button>
+        <button 
+          onClick={() => setActiveUser('meli')}
+          style={{ 
+            flex: 1, padding: '10px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px',
+            backgroundColor: activeUser === 'meli' ? '#ec4899' : 'transparent',
+            color: activeUser === 'meli' ? 'white' : 'var(--text-muted)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', transition: '0.2s'
+          }}
+        >
+          <div style={{ width: 24, height: 24, borderRadius: '50%', backgroundColor: activeUser === 'meli' ? 'rgba(255,255,255,0.2)' : '#ec4899', color: activeUser === 'meli' ? 'white' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>M</div>
+          Meli
+        </button>
       </div>
 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
   <div style={{ display: 'flex', gap: '8px' }}>
