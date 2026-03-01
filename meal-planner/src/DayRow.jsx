@@ -1,8 +1,8 @@
 import React from 'react';
 import MealSlot from './MealSlot';
-import { Coffee, Utensils, Cookie, Moon } from 'lucide-react';
+import { Coffee, Utensils, Cookie, Moon, Trash2 } from 'lucide-react';
 
-export default function DayRow({ day, isToday, data, options, onAddItem, onRemoveItem, onUpdateItem, onCopyMeal, onCopyToTomorrow }) {
+export default function DayRow({ day, isToday, data, options, onAddItem, onRemoveItem, onUpdateItem, onCopyMeal, onCopyToTomorrow, onClearDay }) {
   return (
     <div style={{ 
       background: isToday ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-card)', 
@@ -20,6 +20,13 @@ export default function DayRow({ day, isToday, data, options, onAddItem, onRemov
         <h3 style={{ fontWeight: 900, fontSize: '18px', color: isToday ? '#6366f1' : 'var(--text-title)', margin: 0 }}>
           {day} {isToday && <span style={{ fontSize: '10px', verticalAlign: 'middle', backgroundColor: '#6366f1', color: 'white', padding: '2px 6px', borderRadius: '10px', marginLeft: '5px' }}>HOY</span>}
         </h3>
+        <button 
+          onClick={() => onClearDay(day)}
+          title="Vaciar día"
+          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '5px' }}
+        >
+          <Trash2 size={16} />
+        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>

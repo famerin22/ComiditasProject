@@ -57,14 +57,14 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
                   const food = dbOptions.find(f => f.id === ing.id);
                   if (food) {
                     const key = `${food.name}|${ing.unit}`;
-                    if (!totals[key]) totals[key] = { name: food.name, amount: 0, unit: ing.unit };
+                    if (!totals[key]) totals[key] = { name: food.name, amount: 0, unit: ing.unit, category: food.category || 'Otros' };
                     totals[key].amount += Number(ing.amount) * Number(item.amount);
                   }
                 });
               }
             } else {
               const key = `${item.name}|${item.unit}`;
-              if (!totals[key]) totals[key] = { name: item.name, amount: 0, unit: item.unit };
+              if (!totals[key]) totals[key] = { name: item.name, amount: 0, unit: item.unit, category: item.category || 'Otros' };
               totals[key].amount += Number(item.amount);
             }
           });
@@ -72,14 +72,24 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
       });
     });
 
-    return Object.values(totals).sort((a, b) => a.name.localeCompare(b.name));
+    // Group by category
+    const grouped = {};
+    Object.values(totals).forEach(ing => {
+      if (!grouped[ing.category]) grouped[ing.category] = [];
+      grouped[ing.category].push(ing);
+    });
+
+    // Sort categories and names
+    const sortedCategories = Object.keys(grouped).sort();
+    const finalData = sortedCategories.map(cat => ({
+      category: cat,
+      items: grouped[cat].sort((a, b) => a.name.localeCompare(b.name))
+    }));
+
+    return finalData;
   };
 
-  const ingredients = aggregateIngredients();
-
-  const toggleBought = (key) => {
-    setBoughtItems(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+  const groupedIngredients = aggregateIngredients();
 
   const clearBought = () => {
     if (confirm('¿Vaciar los elementos marcados?')) {
@@ -89,28 +99,28 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
   };
 
   const formatListForSharing = () => {
-    const pending = ingredients.filter(ing => !boughtItems[`${ing.name}-${ing.unit}`]);
-    const pendingExtras = extraItems.filter(i => !i.bought);
-    
-    if (pending.length === 0 && pendingExtras.length === 0) return "¡Lista de compras vacía!";
-    
     let text = `🛒 *LISTA DE COMPRAS (${viewMode === 'combined' ? 'AMBOS' : viewMode.toUpperCase()})*\n\n`;
     
-    if (pending.length > 0) {
-      text += `*Ingredientes:*\n`;
-      pending.forEach(ing => {
-        text += `• ${ing.name}: ${ing.amount}${ing.unit}\n`;
-      });
-    }
+    groupedIngredients.forEach(group => {
+      const pendingInGroup = group.items.filter(ing => !boughtItems[`${ing.name}-${ing.unit}`]);
+      if (pendingInGroup.length > 0) {
+        text += `*--- ${group.category.toUpperCase()} ---*\n`;
+        pendingInGroup.forEach(ing => {
+          text += `• ${ing.name}: ${ing.amount}${ing.unit}\n`;
+        });
+        text += `\n`;
+      }
+    });
     
+    const pendingExtras = extraItems.filter(i => !i.bought);
     if (pendingExtras.length > 0) {
-      text += `\n*Extras:*\n`;
+      text += `*--- EXTRAS ---*\n`;
       pendingExtras.forEach(item => {
         text += `• ${item.name}\n`;
       });
     }
     
-    return text;
+    return text || "¡Lista de compras vacía!";
   };
 
   const shareWhatsApp = () => {
@@ -143,6 +153,7 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
         
         <div style={{ padding: '15px 20px', overflowY: 'auto', flex: 1 }}>
           {/* SECCIÓN DE EXTRAS */}
+          {/* ... (keep extra section as is) */}
           <div style={{ marginBottom: '20px' }}>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <input 
@@ -171,27 +182,34 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
             </div>
           </div>
 
-          <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '10px', borderTop: '1px solid var(--border-card)', paddingTop: '15px' }}>
-            Ingredientes del Menú
-          </div>
-
-          {ingredients.length === 0 ? (
+          {groupedIngredients.length === 0 ? (
             <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px 0' }}>No hay ingredientes en el menú.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {ingredients.map((ing, idx) => {
-                const key = `${ing.name}-${ing.unit}`;
-                const isBought = boughtItems[key];
-                return (
-                  <div key={idx} onClick={() => toggleBought(key)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: '8px', backgroundColor: isBought ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-input)', border: `1px solid ${isBought ? '#10b981' : 'var(--border-color)'}`, cursor: 'pointer' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {isBought ? <CheckCircle2 size={18} color="#10b981" /> : <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--border-color)' }} />}
-                      <span style={{ fontSize: '14px', color: isBought ? 'var(--text-muted)' : 'var(--text-main)', textDecoration: isBought ? 'line-through' : 'none' }}>{ing.name}</span>
-                    </div>
-                    <span style={{ fontWeight: 'bold', color: isBought ? 'var(--text-muted)' : '#6366f1', fontSize: '13px' }}>{ing.amount}{ing.unit}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {groupedIngredients.map((group, gIdx) => (
+                <div key={gIdx}>
+                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ height: '1px', flex: 1, backgroundColor: 'var(--border-color)' }} />
+                    {group.category}
+                    <div style={{ height: '1px', flex: 1, backgroundColor: 'var(--border-color)' }} />
                   </div>
-                );
-              })}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {group.items.map((ing, idx) => {
+                      const key = `${ing.name}-${ing.unit}`;
+                      const isBought = boughtItems[key];
+                      return (
+                        <div key={idx} onClick={() => toggleBought(key)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: '8px', backgroundColor: isBought ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-input)', border: `1px solid ${isBought ? '#10b981' : 'var(--border-color)'}`, cursor: 'pointer' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            {isBought ? <CheckCircle2 size={18} color="#10b981" /> : <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--border-color)' }} />}
+                            <span style={{ fontSize: '14px', color: isBought ? 'var(--text-muted)' : 'var(--text-main)', textDecoration: isBought ? 'line-through' : 'none' }}>{ing.name}</span>
+                          </div>
+                          <span style={{ fontWeight: 'bold', color: isBought ? 'var(--text-muted)' : '#6366f1', fontSize: '13px' }}>{ing.amount}{ing.unit}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -252,10 +270,46 @@ export default function App() {
   const [activeUser, setActiveUser] = useState('fer');
   const [viewMode, setViewMode] = useState('combined');
   const [showShoppingList, setShowShoppingList] = useState(false);
+  const [templates, setTemplates] = useState(() => {
+    const saved = localStorage.getItem('meal_planner_templates');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
 
   useEffect(() => { setDbOptions(getFoods()); }, []);
   useEffect(() => { saveSchedule(schedules); }, [schedules]);
+  useEffect(() => { localStorage.setItem('meal_planner_templates', JSON.stringify(templates)); }, [templates]);
+
+  const saveAsTemplate = () => {
+    const name = prompt('Nombre de la plantilla:');
+    if (!name) return;
+    setTemplates([...templates, { id: Date.now(), name, schedule: schedules[activeUser] }]);
+    alert('Plantilla guardada');
+  };
+
+  const loadTemplate = (template) => {
+    if (confirm(`¿Cargar plantilla "${template.name}"? Se borrará tu semana actual.`)) {
+      setSchedules(prev => ({ ...prev, [activeUser]: template.schedule }));
+    }
+  };
+
+  const deleteTemplate = (id) => {
+    if (confirm('¿Borrar esta plantilla?')) {
+      setTemplates(templates.filter(t => t.id !== id));
+    }
+  };
+
+  const handleClearDay = (day) => {
+    if (confirm(`¿Vaciar todas las comidas del ${day.toUpperCase()}?`)) {
+      setSchedules(prev => ({
+        ...prev,
+        [activeUser]: {
+          ...prev[activeUser],
+          [day]: { desayuno: [], almuerzo: [], merienda: [], cena: [] }
+        }
+      }));
+    }
+  };
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -445,16 +499,34 @@ export default function App() {
     <button onClick={shareWeeklyMenu} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #25D366', color: '#25D366', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>Compartir</button>
     <button onClick={handlePrint} className="no-print" style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--text-muted)', color: 'var(--text-main)', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>🖨️ Imprimir</button>
   </div>
-  <button onClick={clearWeek} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #ef4444', color: '#ef4444', backgroundColor: 'transparent', cursor: 'pointer' }}>Vaciar mi semana</button>
+  <div style={{ display: 'flex', gap: '8px' }}>
+    <button onClick={saveAsTemplate} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #6366f1', color: '#6366f1', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>💾 Guardar Plantilla</button>
+    <button onClick={clearWeek} style={{ padding: '8px 15px', fontSize: '12px', borderRadius: '6px', border: '1px solid #ef4444', color: '#ef4444', backgroundColor: 'transparent', cursor: 'pointer' }}>Vaciar mi semana</button>
+  </div>
 </div>
+
+{templates.length > 0 && (
+  <div style={{ marginBottom: '20px' }}>
+    <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Mis Plantillas</div>
+    <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px', whiteSpace: 'nowrap' }}>
+      {templates.map(t => (
+        <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'var(--bg-card)', padding: '5px 10px', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
+          <span onClick={() => loadTemplate(t)} style={{ cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>{t.name}</span>
+          <X size={14} onClick={() => deleteTemplate(t.id)} style={{ cursor: 'pointer', color: '#ef4444' }} />
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
 <WeeklyStats schedule={schedules[activeUser]} />
 
 <div className="main-grid">
+  <div style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
+    {DAYS.map(day => <DayRow key={day} day={day} isToday={day === todayName} data={schedules[activeUser][day]} options={dbOptions} onAddItem={(time, foodId, amount, unit) => handleAddItem(activeUser, day, time, foodId, amount, unit)} onRemoveItem={(time, itemId) => handleRemoveItem(activeUser, day, time, itemId)} onUpdateItem={(time, id, amount, unit) => handleUpdateItem(activeUser, day, time, id, amount, unit)} onCopyMeal={handleCopyMeal} onCopyToTomorrow={handleCopyToTomorrow} onClearDay={handleClearDay} />)}
+  </div>
+</div>
 
-      <div style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
-        {DAYS.map(day => <DayRow key={day} day={day} isToday={day === todayName} data={schedules[activeUser][day]} options={dbOptions} onAddItem={(time, foodId, amount, unit) => handleAddItem(activeUser, day, time, foodId, amount, unit)} onRemoveItem={(time, itemId) => handleRemoveItem(activeUser, day, time, itemId)} onUpdateItem={(time, id, amount, unit) => handleUpdateItem(activeUser, day, time, id, amount, unit)} onCopyMeal={handleCopyMeal} onCopyToTomorrow={handleCopyToTomorrow} />)}
-      </div>
     </div>
   );
 }
