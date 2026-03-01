@@ -85,8 +85,8 @@ export const getSchedule = (defaultSchedule) => {
   const dayOfWeek = today.getDay(); // 0: Sun, 1: Mon, ..., 6: Sat
   const todayStr = today.toISOString().split('T')[0];
 
-  // If it's Saturday (6) and we haven't reset today yet
-  if (dayOfWeek === 6 && lastReset !== todayStr) {
+  // If it's Monday (1) and we haven't reset today yet
+  if (dayOfWeek === 1 && lastReset !== todayStr) {
     localStorage.setItem('meal_planner_last_reset', todayStr);
     localStorage.setItem('meal_planner_schedule', JSON.stringify(defaultSchedule));
     return defaultSchedule;

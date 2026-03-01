@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, X, Check, Search } from 'lucide-react';
+import { Plus, X, Check, Search, Copy } from 'lucide-react';
 
 function FoodSelectorModal({ options, onSelect, onClose }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -145,7 +145,7 @@ function QuantityModal({ food, onConfirm, onCancel }) {
   );
 }
 
-export default function MealSlot({ label, items = [], options = [], onAddItem, onRemoveItem }) {
+export default function MealSlot({ label, items = [], options = [], onAddItem, onRemoveItem, onCopyAll }) {
   const [showFoodModal, setShowFoodModal] = useState(false);
   const [selectedFoodForQty, setSelectedFoodForQty] = useState(null);
 
@@ -164,15 +164,26 @@ export default function MealSlot({ label, items = [], options = [], onAddItem, o
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginLeft: 4 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginLeft: 4, display: 'flex', alignItems: 'center', gap: '4px' }}>
           {label}
-        </label>
-        <button 
-          onClick={() => setShowFoodModal(true)}
-          style={{ padding: '2px', background: 'none', border: 'none', color: '#6366f1', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-        >
-          <Plus size={16} />
-        </button>
+        </div>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {items.length > 0 && (
+            <button 
+              onClick={onCopyAll}
+              title="Copiar al otro usuario"
+              style={{ padding: '2px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            >
+              <Copy size={14} />
+            </button>
+          )}
+          <button 
+            onClick={() => setShowFoodModal(true)}
+            style={{ padding: '2px', background: 'none', border: 'none', color: '#6366f1', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          >
+            <Plus size={16} />
+          </button>
+        </div>
       </div>
 
       {showFoodModal && (

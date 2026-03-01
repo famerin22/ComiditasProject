@@ -12,9 +12,34 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
     return saved ? JSON.parse(saved) : {};
   });
 
+  const [extraItems, setExtraItems] = useState(() => {
+    const saved = localStorage.getItem('meal_planner_extras');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [newExtra, setNewExtra] = useState('');
+
   useEffect(() => {
     localStorage.setItem('meal_planner_bought', JSON.stringify(boughtItems));
   }, [boughtItems]);
+
+  useEffect(() => {
+    localStorage.setItem('meal_planner_extras', JSON.stringify(extraItems));
+  }, [extraItems]);
+
+  const addExtra = () => {
+    if (!newExtra.trim()) return;
+    setExtraItems([...extraItems, { id: Date.now(), name: newExtra.trim(), bought: false }]);
+    setNewExtra('');
+  };
+
+  const toggleExtra = (id) => {
+    setExtraItems(extraItems.map(item => item.id === id ? { ...item, bought: !item.bought } : item));
+  };
+
+  const removeExtra = (id) => {
+    setExtraItems(extraItems.filter(item => item.id !== id));
+  };
 
   const aggregateIngredients = () => {
     const totals = {};
@@ -57,17 +82,34 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
   };
 
   const clearBought = () => {
-    if (confirm('¿Vaciar los elementos marcados?')) setBoughtItems({});
+    if (confirm('¿Vaciar los elementos marcados?')) {
+      setBoughtItems({});
+      setExtraItems(extraItems.filter(i => !i.bought));
+    }
   };
 
   const formatListForSharing = () => {
     const pending = ingredients.filter(ing => !boughtItems[`${ing.name}-${ing.unit}`]);
-    if (pending.length === 0) return "¡Lista de compras vacía!";
+    const pendingExtras = extraItems.filter(i => !i.bought);
+    
+    if (pending.length === 0 && pendingExtras.length === 0) return "¡Lista de compras vacía!";
     
     let text = `🛒 *LISTA DE COMPRAS (${viewMode === 'combined' ? 'AMBOS' : viewMode.toUpperCase()})*\n\n`;
-    pending.forEach(ing => {
-      text += `• ${ing.name}: ${ing.amount}${ing.unit}\n`;
-    });
+    
+    if (pending.length > 0) {
+      text += `*Ingredientes:*\n`;
+      pending.forEach(ing => {
+        text += `• ${ing.name}: ${ing.amount}${ing.unit}\n`;
+      });
+    }
+    
+    if (pendingExtras.length > 0) {
+      text += `\n*Extras:*\n`;
+      pendingExtras.forEach(item => {
+        text += `• ${item.name}\n`;
+      });
+    }
+    
     return text;
   };
 
@@ -95,13 +137,46 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
 
         <div style={{ display: 'flex', gap: '5px', padding: '10px 20px', backgroundColor: 'var(--bg-item)', borderBottom: '1px solid var(--border-card)' }}>
           <button onClick={() => setViewUser('combined')} style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '6px', border: 'none', backgroundColor: viewMode === 'combined' ? '#6366f1' : 'transparent', color: viewMode === 'combined' ? 'white' : 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer' }}>Ambos</button>
-          <button onClick={() => setViewUser('fer')} style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '6px', border: 'none', backgroundColor: viewMode === 'fer' ? '#6366f1' : 'transparent', color: viewMode === 'fer' ? 'white' : 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer' }}>Solo Fer</button>
-          <button onClick={() => setViewUser('meli')} style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '6px', border: 'none', backgroundColor: viewMode === 'meli' ? '#ec4899' : 'transparent', color: viewMode === 'meli' ? 'white' : 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer' }}>Solo Meli</button>
+          <button onClick={() => setViewUser('fer')} style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '6px', border: 'none', backgroundColor: viewMode === 'fer' ? '#6366f1' : 'transparent', color: viewMode === 'fer' ? 'white' : 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer' }}>Fer</button>
+          <button onClick={() => setViewUser('meli')} style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '6px', border: 'none', backgroundColor: viewMode === 'meli' ? '#ec4899' : 'transparent', color: viewMode === 'meli' ? 'white' : 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer' }}>Meli</button>
         </div>
         
         <div style={{ padding: '15px 20px', overflowY: 'auto', flex: 1 }}>
+          {/* SECCIÓN DE EXTRAS */}
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <input 
+                type="text" 
+                placeholder="Añadir algo extra (ej: Papel, Café)..." 
+                value={newExtra}
+                onChange={(e) => setNewExtra(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && addExtra()}
+                style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '14px' }}
+              />
+              <button onClick={addExtra} style={{ padding: '10px 15px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                +
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {extraItems.map(item => (
+                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: '8px', backgroundColor: item.bought ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-item)', border: `1px solid ${item.bought ? '#10b981' : 'var(--border-color)'}` }}>
+                  <div onClick={() => toggleExtra(item.id)} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    {item.bought ? <CheckCircle2 size={18} color="#10b981" /> : <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--border-color)' }} />}
+                    <span style={{ fontSize: '14px', color: item.bought ? 'var(--text-muted)' : 'var(--text-main)', textDecoration: item.bought ? 'line-through' : 'none' }}>{item.name}</span>
+                  </div>
+                  <X size={16} onClick={() => removeExtra(item.id)} style={{ cursor: 'pointer', color: 'var(--text-muted)', marginLeft: '10px' }} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '10px', borderTop: '1px solid var(--border-card)', paddingTop: '15px' }}>
+            Ingredientes del Menú
+          </div>
+
           {ingredients.length === 0 ? (
-            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px 0' }}>No hay alimentos en el menú.</div>
+            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px 0' }}>No hay ingredientes en el menú.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {ingredients.map((ing, idx) => {
@@ -173,6 +248,28 @@ export default function App() {
     setSchedules(prev => ({...prev, [person]: { ...prev[person], [day]: { ...prev[person][day], [time]: prev[person][day][time].filter(i => i.id !== itemId) }}}));
   };
 
+  const handleCopyMeal = (day, time) => {
+    const otherUser = activeUser === 'fer' ? 'meli' : 'fer';
+    const itemsToCopy = schedules[activeUser][day][time].map(item => ({
+      ...item,
+      id: Date.now() + Math.random() // Unique ID for the copy
+    }));
+
+    if (itemsToCopy.length === 0) return;
+
+    setSchedules(prev => ({
+      ...prev,
+      [otherUser]: {
+        ...prev[otherUser],
+        [day]: {
+          ...prev[otherUser][day],
+          [time]: [...prev[otherUser][day][time], ...itemsToCopy]
+        }
+      }
+    }));
+    alert(`Comida copiada a ${otherUser.toUpperCase()}`);
+  };
+
   const clearWeek = () => {
     if (confirm(`¿Vaciar todo el menú de ${activeUser.toUpperCase()}?`)) {
       setSchedules(prev => ({ ...prev, [activeUser]: createEmptySchedule() }));
@@ -208,7 +305,7 @@ export default function App() {
       </div>
 
       <div style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
-        {DAYS.map(day => <DayRow key={day} day={day} data={schedules[activeUser][day]} options={dbOptions} onAddItem={(time, foodId, amount, unit) => handleAddItem(activeUser, day, time, foodId, amount, unit)} onRemoveItem={(time, itemId) => handleRemoveItem(activeUser, day, time, itemId)} />)}
+        {DAYS.map(day => <DayRow key={day} day={day} data={schedules[activeUser][day]} options={dbOptions} onAddItem={(time, foodId, amount, unit) => handleAddItem(activeUser, day, time, foodId, amount, unit)} onRemoveItem={(time, itemId) => handleRemoveItem(activeUser, day, time, itemId)} onCopyMeal={handleCopyMeal} />)}
       </div>
     </div>
   );
