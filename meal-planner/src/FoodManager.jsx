@@ -201,7 +201,7 @@ export default function FoodManager({ onDatabaseChange }) {
                     <div>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Categoría</span>
                       <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}>
-                        {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                        {CATEGORIES.map(cat => <option key={cat.name} value={cat.name}>{cat.icon} {cat.name}</option>)}
                       </select>
                     </div>
                     <div>

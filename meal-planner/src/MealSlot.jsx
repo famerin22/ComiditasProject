@@ -66,10 +66,26 @@ function FoodSelectorModal({ options, recentFoods = [], onSelect, onClose }) {
           </div>
 
           <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '5px', whiteSpace: 'nowrap' }}>
-            {['Todas', ...CATEGORIES].map(cat => (
-              <button key={cat} onClick={() => setSelectedCat(cat)} style={{ padding: '5px 12px', borderRadius: '15px', fontSize: '12px', border: '1px solid var(--border-color)', backgroundColor: selectedCat === cat ? '#6366f1' : 'var(--bg-item)', color: selectedCat === cat ? 'white' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 'bold' }}>{cat}</button>
-            ))}
+            {['Todas', ...CATEGORIES].map(cat => {
+              const name = typeof cat === 'string' ? cat : cat.name;
+              const icon = typeof cat === 'object' ? cat.icon : '';
+              return (
+                <button
+                  key={name}
+                  onClick={() => setSelectedCat(name)}
+                  style={{ 
+                    padding: '5px 12px', borderRadius: '15px', fontSize: '12px', border: '1px solid var(--border-color)',
+                    backgroundColor: selectedCat === name ? '#6366f1' : 'var(--bg-item)',
+                    color: selectedCat === name ? 'white' : 'var(--text-muted)',
+                    cursor: 'pointer', fontWeight: 'bold'
+                  }}
+                >
+                  {icon} {name}
+                </button>
+              );
+            })}
           </div>
+
 
           <div style={{ overflowY: 'auto', flex: 1 }}>
             {searchTerm === '' && selectedCat === 'Todas' && (
