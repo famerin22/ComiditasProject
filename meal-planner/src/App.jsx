@@ -4,7 +4,7 @@ import DayRow from './DayRow';
 import { getFoods, getSchedule, saveSchedule } from './mockDb';
 import FoodManager from './FoodManager';
 
-const DAYS = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
+const DAYS = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'];
 
 function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClose }) {
   const [boughtItems, setBoughtItems] = useState(() => {
@@ -384,9 +384,20 @@ export default function App() {
 
   const getTodayName = () => ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'][new Date().getDay()];
   const todayName = getTodayName();
+  const isPrepDay = todayName === 'Sabado' || todayName === 'Domingo';
 
   return (
     <div style={{ padding: '10px 15px', minHeight: '100vh', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', transition: '0.3s' }}>
+      {isPrepDay && (
+        <div style={{ 
+          backgroundColor: '#6366f1', color: 'white', padding: '12px', borderRadius: '12px', 
+          marginBottom: '20px', textAlign: 'center', fontWeight: 'bold', fontSize: '18px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+          boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.4)'
+        }}>
+          <ShoppingCart size={24} /> 🥗 ¡Hoy es Prep Day! Día de compra y cocina.
+        </div>
+      )}
       <header style={{ marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' }}><Utensils size={28} /> MealPlan Pro</h1>
