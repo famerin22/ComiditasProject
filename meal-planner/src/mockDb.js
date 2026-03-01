@@ -62,7 +62,8 @@ export const addFood = (food) => {
     ingredients: food.ingredients || [],
     instructions: food.instructions || '',
     default_unit: food.default_unit || (food.is_recipe ? 'unidades' : 'g'),
-    category: food.category || 'Otros'
+    category: food.category || 'Otros',
+    favorite: food.favorite || false
   };
   MOCK_DB.push(newFood);
   saveToLocal();
@@ -70,7 +71,7 @@ export const addFood = (food) => {
 };
 
 export const updateFood = (id, updatedFood) => {
-  MOCK_DB = MOCK_DB.map(f => f.id === id ? { ...f, ...updatedFood, id, instructions: updatedFood.instructions || '' } : f);
+  MOCK_DB = MOCK_DB.map(f => f.id === id ? { ...f, ...updatedFood, id, instructions: updatedFood.instructions || '', favorite: updatedFood.favorite || false } : f);
   saveToLocal();
   return MOCK_DB.find(f => f.id === id);
 };

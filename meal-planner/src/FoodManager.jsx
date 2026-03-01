@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, X, Check, Database, Search, UtensilsCrossed, Tag, BookOpen } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, Database, Search, UtensilsCrossed, Tag, BookOpen, Star } from 'lucide-react';
 import { addFood, updateFood, deleteFood, getFoods, CATEGORIES } from './mockDb';
 
 function RecipeIngredientEditor({ ingredients = [], allFoods = [], onUpdate }) {
@@ -105,7 +105,7 @@ export default function FoodManager({ onDatabaseChange }) {
   const [foods, setFoods] = useState(getFoods());
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '' });
+  const [formData, setFormData] = useState({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '', favorite: false });
   const [showMainModal, setShowMainModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -122,9 +122,14 @@ export default function FoodManager({ onDatabaseChange }) {
     } else {
       addFood(formData);
     }
-    setFormData({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '' });
+    setFormData({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '', favorite: false });
     setIsAdding(false);
     setEditingId(null);
+    refresh();
+  };
+
+  const toggleQuickFav = (food) => {
+    updateFood(food.id, { ...food, favorite: !food.favorite });
     refresh();
   };
 
@@ -136,7 +141,8 @@ export default function FoodManager({ onDatabaseChange }) {
       default_unit: food.default_unit || 'g',
       ingredients: food.ingredients || [],
       category: food.category || 'Otros',
-      instructions: food.instructions || ''
+      instructions: food.instructions || '',
+      favorite: food.favorite || false
     });
     setIsAdding(true);
   };
@@ -151,24 +157,16 @@ export default function FoodManager({ onDatabaseChange }) {
   const cancel = () => {
     setIsAdding(false);
     setEditingId(null);
-    setFormData({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '' });
+    setFormData({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '', favorite: false });
   };
 
-  const filteredFoods = foods.filter(f => 
-    f.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredFoods = foods
+    .filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
 
   return (
     <>
-      <button 
-        onClick={() => setShowMainModal(true)}
-        style={{ 
-          display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', 
-          backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', 
-          border: '1px solid var(--border-color)', borderRadius: '8px', 
-          cursor: 'pointer', fontWeight: 'bold', transition: '0.2s'
-        }}
-      >
+      <button onClick={() => setShowMainModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}>
         <Database size={18} /> <span style={{ fontSize: '14px' }}>Gestionar Alimentos</span>
       </button>
 
@@ -184,15 +182,11 @@ export default function FoodManager({ onDatabaseChange }) {
               <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ position: 'relative', flex: 1, maxWidth: '300px' }}>
                   <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input 
-                    type="text" placeholder="Buscar..." value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ width: '100%', padding: '10px 12px 10px 40px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box' }}
-                  />
+                  <input type="text" placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ width: '100%', padding: '10px 12px 10px 40px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box' }} />
                 </div>
                 {!isAdding && (
                   <button onClick={() => setIsAdding(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-                    <Plus size={18} /> Nuevo Alimento
+                    <Plus size={18} /> Nuevo
                   </button>
                 )}
               </div>
@@ -202,87 +196,70 @@ export default function FoodManager({ onDatabaseChange }) {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', alignItems: 'flex-end' }}>
                     <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '5px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nombre</span>
-                      <input type="text" placeholder="Ej: Pollo" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }} />
+                      <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }} />
                     </div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <div>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Categoría</span>
                       <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}>
                         {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                       </select>
                     </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <div>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Unidad</span>
                       <input type="text" disabled={formData.is_recipe} value={formData.is_recipe ? 'unidades' : formData.default_unit} onChange={(e) => setFormData({ ...formData, default_unit: e.target.value })} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: formData.is_recipe ? 'rgba(0,0,0,0.05)' : 'var(--bg-input)', color: 'var(--text-main)' }} />
                     </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', height: '40px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', height: '40px' }}>
                       <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-main)', cursor: 'pointer' }}>
                         <input type="checkbox" checked={formData.is_recipe} onChange={(e) => setFormData({ ...formData, is_recipe: e.target.checked, default_unit: e.target.checked ? 'unidades' : 'g' })} /> Receta
                       </label>
+                      <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', color: '#fbbf24', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={formData.favorite} onChange={(e) => setFormData({ ...formData, favorite: e.target.checked })} /> Favorito
+                      </label>
                     </div>
-
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                       <button onClick={handleSave} style={{ padding: '10px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}><Check size={20}/></button>
                       <button onClick={cancel} style={{ padding: '10px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}><X size={20}/></button>
                     </div>
                   </div>
-
                   {formData.is_recipe && (
-                    <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <BookOpen size={14} /> Instrucciones de Preparación
-                        </span>
-                        <textarea 
-                          placeholder="Escribe los pasos para preparar esta receta..."
-                          value={formData.instructions}
-                          onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
-                          style={{ width: '100%', height: '80px', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '14px', resize: 'none' }}
-                        />
-                      </div>
+                    <div style={{ marginTop: '15px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}><BookOpen size={14} /> Instrucciones</span>
+                      <textarea value={formData.instructions} onChange={(e) => setFormData({ ...formData, instructions: e.target.value })} style={{ width: '100%', height: '80px', padding: '10px', marginTop: '5px', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '14px', resize: 'none' }} />
                       <RecipeIngredientEditor ingredients={formData.ingredients} allFoods={foods} onUpdate={(newIngs) => setFormData({ ...formData, ingredients: newIngs })} />
                     </div>
                   )}
                 </div>
               )}
 
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid var(--border-card)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
-                      <th style={{ padding: '12px 8px' }}>Nombre</th>
-                      <th style={{ padding: '12px 8px' }}>Categoría</th>
-                      <th style={{ padding: '12px 8px' }}>Tipo</th>
-                      <th style={{ padding: '12px 8px', textAlign: 'right' }}>Acciones</th>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border-card)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
+                    <th style={{ padding: '12px 8px' }}>Fav</th>
+                    <th style={{ padding: '12px 8px' }}>Nombre</th>
+                    <th style={{ padding: '12px 8px' }}>Categoría</th>
+                    <th style={{ padding: '12px 8px', textAlign: 'right' }}>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredFoods.map(food => (
+                    <tr key={food.id} style={{ borderBottom: '1px solid var(--border-card)', fontSize: '14px' }}>
+                      <td style={{ padding: '12px 8px' }}>
+                        <Star size={18} onClick={() => toggleQuickFav(food)} fill={food.favorite ? '#fbbf24' : 'none'} color={food.favorite ? '#fbbf24' : 'var(--text-muted)'} style={{ cursor: 'pointer' }} />
+                      </td>
+                      <td style={{ padding: '12px 8px', color: 'var(--text-main)', fontWeight: 'bold' }}>{food.name}</td>
+                      <td style={{ padding: '12px 8px' }}>
+                        <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '12px', backgroundColor: 'var(--bg-item)', color: 'var(--text-muted)', border: '1px solid var(--border-color)' }}>{food.category || 'Otros'}</span>
+                      </td>
+                      <td style={{ padding: '12px 8px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                          <button onClick={() => startEdit(food)} style={{ color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer' }}><Edit2 size={18}/></button>
+                          <button onClick={() => handleDelete(food.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18}/></button>
+                        </div>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {filteredFoods.map(food => (
-                      <tr key={food.id} style={{ borderBottom: '1px solid var(--border-card)', fontSize: '14px' }}>
-                        <td style={{ padding: '12px 8px', color: 'var(--text-main)', fontWeight: 'bold' }}>{food.name}</td>
-                        <td style={{ padding: '12px 8px' }}>
-                          <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '12px', backgroundColor: 'var(--bg-item)', color: 'var(--text-muted)', border: '1px solid var(--border-color)' }}>
-                            {food.category || 'Otros'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px 8px' }}>
-                          <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '6px', backgroundColor: food.is_recipe ? 'var(--bg-tag)' : 'rgba(0,0,0,0.05)', color: food.is_recipe ? 'var(--text-tag)' : 'var(--text-muted)' }}>
-                            {food.is_recipe ? 'Receta' : 'Ingrediente'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px 8px', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => startEdit(food)} style={{ color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}><Edit2 size={18}/></button>
-                            <button onClick={() => handleDelete(food.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}><Trash2 size={18}/></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
