@@ -162,11 +162,20 @@ function QuantityModal({ food, onConfirm, onCancel, initialAmount = '1', initial
         </div>
         <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#6366f1', textAlign: 'center' }}>{food.name}</div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Cantidad</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Cantidad (Cocido)</label>
+                {food.conversion_factor && food.conversion_factor !== 1 && (
+                  <span style={{ fontSize: '10px', color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                    Factor: x{food.conversion_factor} (Crudo: {Math.round((parseFloat(amount) || 0) / food.conversion_factor * 10) / 10}{unit})
+                  </span>
+                )}
+              </div>
               <input type="number" autoFocus inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', boxSizing: 'border-box', fontSize: '16px' }} />
             </div>
+
             <div>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Unidad</label>
               {food.is_recipe ? (

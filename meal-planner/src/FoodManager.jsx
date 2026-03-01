@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, X, Check, Database, Search, UtensilsCrossed, Tag, BookOpen, Star } from 'lucide-react';
-import { addFood, updateFood, deleteFood, getFoods, CATEGORIES } from './mockDb';
+import { Plus, Edit2, Trash2, X, Check, Database, Search, UtensilsCrossed, Tag, BookOpen, Star, Scale } from 'lucide-react';
+import { addFood, updateFood, deleteFood, getFoods, CATEGORIES, getSuggestedFactor } from './mockDb';
 
 function RecipeIngredientEditor({ ingredients = [], allFoods = [], onUpdate }) {
   const [showAdd, setShowAdd] = useState(false);
@@ -105,7 +105,7 @@ export default function FoodManager({ onDatabaseChange }) {
   const [foods, setFoods] = useState(getFoods());
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '', favorite: false });
+  const [formData, setFormData] = useState({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '', favorite: false, conversion_factor: 1.0 });
   const [showMainModal, setShowMainModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -115,6 +115,12 @@ export default function FoodManager({ onDatabaseChange }) {
     onDatabaseChange(updated);
   };
 
+  const handleNameChange = (e) => {
+    const name = e.target.value;
+    const factor = getSuggestedFactor(name);
+    setFormData({ ...formData, name, conversion_factor: factor });
+  };
+
   const handleSave = () => {
     if (!formData.name.trim()) return;
     if (editingId) {
@@ -122,7 +128,7 @@ export default function FoodManager({ onDatabaseChange }) {
     } else {
       addFood(formData);
     }
-    setFormData({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '', favorite: false });
+    setFormData({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '', favorite: false, conversion_factor: 1.0 });
     setIsAdding(false);
     setEditingId(null);
     refresh();
@@ -142,7 +148,8 @@ export default function FoodManager({ onDatabaseChange }) {
       ingredients: food.ingredients || [],
       category: food.category || 'Otros',
       instructions: food.instructions || '',
-      favorite: food.favorite || false
+      favorite: food.favorite || false,
+      conversion_factor: food.conversion_factor || 1.0
     });
     setIsAdding(true);
   };
@@ -157,7 +164,7 @@ export default function FoodManager({ onDatabaseChange }) {
   const cancel = () => {
     setIsAdding(false);
     setEditingId(null);
-    setFormData({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '', favorite: false });
+    setFormData({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '', favorite: false, conversion_factor: 1.0 });
   };
 
   const filteredFoods = foods
@@ -196,7 +203,7 @@ export default function FoodManager({ onDatabaseChange }) {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', alignItems: 'flex-end' }}>
                     <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '5px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nombre</span>
-                      <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }} />
+                      <input type="text" value={formData.name} onChange={handleNameChange} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }} />
                     </div>
                     <div>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Categoría</span>
@@ -207,6 +214,13 @@ export default function FoodManager({ onDatabaseChange }) {
                     <div>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Unidad</span>
                       <input type="text" disabled={formData.is_recipe} value={formData.is_recipe ? 'unidades' : formData.default_unit} onChange={(e) => setFormData({ ...formData, default_unit: e.target.value })} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: formData.is_recipe ? 'rgba(0,0,0,0.05)' : 'var(--bg-input)', color: 'var(--text-main)' }} />
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Factor (Cocido/Crudo)</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Scale size={14} color="var(--text-muted)" />
+                        <input type="number" step="0.05" value={formData.conversion_factor} onChange={(e) => setFormData({ ...formData, conversion_factor: parseFloat(e.target.value) || 1 })} style={{ width: '100%', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }} />
+                      </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px', height: '40px' }}>
                       <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-main)', cursor: 'pointer' }}>
@@ -236,7 +250,7 @@ export default function FoodManager({ onDatabaseChange }) {
                   <tr style={{ borderBottom: '2px solid var(--border-card)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
                     <th style={{ padding: '12px 8px' }}>Fav</th>
                     <th style={{ padding: '12px 8px' }}>Nombre</th>
-                    <th style={{ padding: '12px 8px' }}>Categoría</th>
+                    <th style={{ padding: '12px 8px' }}>Factor</th>
                     <th style={{ padding: '12px 8px', textAlign: 'right' }}>Acciones</th>
                   </tr>
                 </thead>
@@ -246,9 +260,12 @@ export default function FoodManager({ onDatabaseChange }) {
                       <td style={{ padding: '12px 8px' }}>
                         <Star size={18} onClick={() => toggleQuickFav(food)} fill={food.favorite ? '#fbbf24' : 'none'} color={food.favorite ? '#fbbf24' : 'var(--text-muted)'} style={{ cursor: 'pointer' }} />
                       </td>
-                      <td style={{ padding: '12px 8px', color: 'var(--text-main)', fontWeight: 'bold' }}>{food.name}</td>
-                      <td style={{ padding: '12px 8px' }}>
-                        <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '12px', backgroundColor: 'var(--bg-item)', color: 'var(--text-muted)', border: '1px solid var(--border-color)' }}>{food.category || 'Otros'}</span>
+                      <td style={{ padding: '12px 8px', color: 'var(--text-main)', fontWeight: 'bold' }}>
+                        {food.name}
+                        <div style={{ fontSize: '10px', fontWeight: 'normal', color: 'var(--text-muted)' }}>{food.category}</div>
+                      </td>
+                      <td style={{ padding: '12px 8px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                        x{food.conversion_factor || 1.0}
                       </td>
                       <td style={{ padding: '12px 8px', textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>

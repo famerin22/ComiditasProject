@@ -1,0 +1,101 @@
+Food Item,Category,Factor,Note
+Chicken Breast (Boneless),Protein,0.75,Loss due to moisture evaporation
+Chicken Thigh (Boneless),Protein,0.70,Higher fat content leads to more shrinkage
+Ground Beef (80/20),Protein,0.70,Significant fat and water loss
+Ground Beef (95/5),Protein,0.75,Less fat loss than 80/20
+Sirloin Steak,Protein,0.75,Standard sear/grill shrinkage
+Pork Chop (Boneless),Protein,0.75,Standard lean protein loss
+Bacon,Protein,0.30,Massive loss of fat and water
+Salmon Fillet,Protein,0.80,Relatively low moisture loss
+Cod Fillet,Protein,0.75,Flaky fish loses water easily
+Shrimp,Protein,0.65,Significant curling and water loss
+Lamb Chop,Protein,0.70,Standard protein shrinkage
+Turkey Breast,Protein,0.75,Similar to chicken breast
+White Rice (Long Grain),Grain,3.00,Absorbs 2x its weight in water
+Brown Rice,Grain,2.50,Absorbs slightly less than white rice
+Quinoa,Grain,3.00,Triples in volume and weight
+Oats (Rolled),Grain,2.50,Varies based on liquid preference
+Pasta (Dry Spaghetti),Grain,2.25,Usually doubles+ in weight
+Pasta (Dry Penne),Grain,2.00,Standard wheat pasta absorption
+Lentils (Dry),Legume,2.50,Significant absorption
+Black Beans (Dry),Legume,2.20,Based on overnight soak and boil
+Chickpeas (Dry),Legume,2.20,Standard legume expansion
+Kidney Beans (Dry),Legume,2.30,Standard legume expansion
+Spinach (Fresh),Vegetable,0.10,Massive volume and water loss
+Mushrooms (Button),Vegetable,0.50,High water content evaporates
+Zucchini,Vegetable,0.60,Significant water loss when sautéed
+Onions (Yellow),Vegetable,0.50,Based on caramelization/sautéing
+Broccoli (Steamed),Vegetable,0.90,Minimal weight change
+Asparagus (Roasted),Vegetable,0.80,Moisture loss in oven
+Potatoes (Boiled),Vegetable,1.00,Minimal change in weight
+Potatoes (Roasted),Vegetable,0.75,Crisping leads to water loss
+Sweet Potato (Baked),Vegetable,0.85,Water loss through skin
+Cabbage (Sautéed),Vegetable,0.40,Wilts significantly
+Couscous (Dry),Grain,2.50,Quick absorption
+Bulgur (Dry),Grain,2.50,Standard grain expansion
+Barley (Dry),Grain,3.00,High absorption rate
+Amaranth,Grain,2.50,Similar to quinoa
+Buckwheat (Kasha),Grain,2.00,Moderate absorption
+Tofu (Firm),Protein,0.85,Loses some water if seared
+Tempeh,Protein,0.95,Very dense, minimal change
+Egg (Large),Protein,0.90,Minimal loss during frying/boiling
+Sausage Link,Protein,0.75,Fat rendering
+Duck Breast,Protein,0.60,High fat rendering from skin
+Scallops,Protein,0.65,High water content loss
+Lobster Tail,Protein,0.80,Steamed/Boiled
+Mussels (In Shell),Protein,0.40,Weight includes shell; meat is small
+Clams (In Shell),Protein,0.35,Weight includes shell
+Venison Steak,Protein,0.75,Very lean, standard loss
+Eggplant,Vegetable,0.50,Spongy texture loses water
+Bell Peppers,Vegetable,0.70,Roasted or sautéed
+Carrots (Roasted),Vegetable,0.80,Slightly more dense when cooked
+Brussels Sprouts,Vegetable,0.80,Standard roasting loss
+Kale (Sautéed),Vegetable,0.30,Wilts significantly
+Collard Greens,Vegetable,0.30,Long simmer reduces weight
+Cauliflower (Roasted),Vegetable,0.70,Water evaporation
+Green Beans,Vegetable,0.85,Minimal change if blanched
+Corn (on the cob),Vegetable,0.95,Boiled
+Beets (Roasted),Vegetable,0.75,Peeling and water loss
+Parsnips,Vegetable,0.80,Similar to carrots
+Turnips,Vegetable,0.70,High water content
+Radishes (Roasted),Vegetable,0.60,Surprising water loss
+Squash (Butternut),Vegetable,0.80,Standard roasting
+Pumpkin (Puree),Vegetable,0.70,From raw chunks to mash
+Artichoke,Vegetable,0.50,Loss of outer leaves and water
+Split Peas (Dry),Legume,2.50,Absorbs water into mush
+Navy Beans (Dry),Legume,2.20,Standard legume
+Pinto Beans (Dry),Legume,2.20,Standard legume
+Soybeans (Edamame),Legume,1.50,Boiled in pod
+Farro (Dry),Grain,2.30,Chewy grain absorption
+Millet (Dry),Grain,3.00,High expansion
+Wild Rice,Grain,3.00,High expansion
+Polenta (Dry Cornmeal),Grain,4.00,High liquid-to-grain ratio
+Steel Cut Oats,Grain,3.50,Requires more water than rolled
+Freekeh,Grain,2.50,Standard grain
+Spelt,Grain,2.50,Standard grain
+Ground Turkey,Protein,0.75,Lean protein loss
+Bison (Ground),Protein,0.70,Lean but still shrinks
+Ham (Raw/Fresh),Protein,0.75,Standard pork loss
+Corned Beef (Raw),Protein,0.60,Shrinks significantly during long boil
+Beef Brisket,Protein,0.60,Fat render and long cook time
+Short Ribs,Protein,0.55,High fat and bone content
+Tilapia Fillet,Protein,0.75,Standard white fish
+Trout Fillet,Protein,0.80,Oily fish holds weight better
+Tuna Steak,Protein,0.85,Loses less if served rare
+Catfish Fillet,Protein,0.75,Standard white fish
+Swordfish,Protein,0.80,Dense meat holds moisture
+Okra,Vegetable,0.80,Standard sauté
+Leeks,Vegetable,0.50,Significant volume loss
+Bok Choy,Vegetable,0.40,Watery stems/leaves wilt
+Swiss Chard,Vegetable,0.30,Similar to spinach
+Fennel Bulb,Vegetable,0.60,Roasted
+Celery,Vegetable,0.60,High water content
+Rhubarb,Vegetable,0.50,Loses water and structure
+Chicken Wings,Protein,0.60,High bone-to-meat ratio
+Whole Chicken,Protein,0.65,Includes bone and fat loss
+Pork Butt (Shoulder),Protein,0.60,Fat rendering for pulled pork
+Ribs (Pork),Protein,0.55,Significant bone weight
+Venison Ground,Protein,0.80,Very lean, less fat loss
+Chia Seeds (Dry),Other,6.00,Absorbs massive amounts of liquid
+Tapioca Pearls (Dry),Other,2.00,Absorption and swelling
+Calamari (Squid),Protein,0.60,Toughens and shrinks

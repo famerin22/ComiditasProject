@@ -53,6 +53,10 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
                   if (food) {
                     const key = `${food.name}|${ing.unit}`;
                     if (!totals[key]) totals[key] = { name: food.name, amount: 0, unit: ing.unit, category: food.category || 'Otros' };
+                    
+                    // Conversion factor for recipes is complex as it's a fixed dish, 
+                    // but the ingredients themselves might have factors. 
+                    // For now, we multiply recipe units by ingredient amount.
                     totals[key].amount += Number(ing.amount) * Number(item.amount);
                   }
                 });
@@ -60,7 +64,11 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
             } else {
               const key = `${item.name}|${item.unit}`;
               if (!totals[key]) totals[key] = { name: item.name, amount: 0, unit: item.unit, category: item.category || 'Otros' };
-              totals[key].amount += Number(item.amount);
+              
+              // Apply conversion factor: raw = cooked / factor
+              const factor = item.conversion_factor || 1.0;
+              const rawAmount = Number(item.amount) / factor;
+              totals[key].amount += rawAmount;
             }
           });
         });
@@ -70,6 +78,8 @@ function ShoppingListModal({ schedules, dbOptions, viewMode, setViewUser, onClos
     const grouped = {};
     Object.values(totals).forEach(ing => {
       if (!grouped[ing.category]) grouped[ing.category] = [];
+      // Round to 1 decimal place
+      ing.amount = Math.round(ing.amount * 10) / 10;
       grouped[ing.category].push(ing);
     });
 
@@ -283,7 +293,11 @@ export default function App() {
     const newItem = {
       id: Date.now(), // eslint-disable-line react-hooks/purity
       type: food.is_recipe ? 'recipe' : 'ingredient',
- name: food.name, category: food.category || 'Otros', amount, unit,
+      name: food.name,
+      category: food.category || 'Otros',
+      amount,
+      unit,
+      conversion_factor: food.conversion_factor || 1.0,
       ingredients: food.is_recipe ? (food.ingredients || []).map(ing => {
         const detail = dbOptions.find(f => f.id === ing.id);
         return detail ? `${detail.name} (${ing.amount}${ing.unit})` : null;
@@ -293,7 +307,23 @@ export default function App() {
   };
 
   const handleUpdateItem = (person, day, time, itemId, amount, unit) => {
-    setSchedules(prev => ({...prev, [person]: { ...prev[person], [day]: { ...prev[person][day], [time]: prev[person][day][time].map(item => item.id === itemId ? { ...item, amount, unit } : item) }}}));
+    setSchedules(prev => ({
+      ...prev,
+      [person]: {
+        ...prev[person],
+        [day]: {
+          ...prev[person][day],
+          [time]: prev[person][day][time].map(item => {
+            if (item.id === itemId) {
+              // Lookup original factor from db just in case
+              const foodDef = dbOptions.find(f => f.name === item.name);
+              return { ...item, amount, unit, conversion_factor: foodDef?.conversion_factor || item.conversion_factor || 1.0 };
+            }
+            return item;
+          })
+        }
+      }
+    }));
   };
 
   const handleRemoveItem = (person, day, time, itemId) => {

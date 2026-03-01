@@ -32,16 +32,16 @@ const getInitialData = () => {
       ],
       default_unit: 'unidades'
     },
-    { id: 3, name: 'Pechuga de Pollo', is_recipe: false, default_unit: 'g', category: 'Carne' },
-    { id: 4, name: 'Papas', is_recipe: false, default_unit: 'g', category: 'Verdura' },
-    { id: 5, name: 'Fideos', is_recipe: false, default_unit: 'g', category: 'Pasta' },
-    { id: 6, name: 'Salsa de Tomate', is_recipe: false, default_unit: 'ml', category: 'Salsa' },
-    { id: 7, name: 'Carne Picada', is_recipe: false, default_unit: 'g', category: 'Carne' },
-    { id: 8, name: 'Leche', is_recipe: false, default_unit: 'ml', category: 'Lácteo' },
-    { id: 9, name: 'Manteca', is_recipe: false, default_unit: 'g', category: 'Lácteo' },
-    { id: 10, name: 'Huevo', is_recipe: false, default_unit: 'unidades', category: 'Proteína' },
-    { id: 11, name: 'Pan Rallado', is_recipe: false, default_unit: 'g', category: 'Otros' },
-    { id: 12, name: 'Cebolla', is_recipe: false, default_unit: 'unidades', category: 'Verdura' }
+    { id: 3, name: 'Pechuga de Pollo', is_recipe: false, default_unit: 'g', category: 'Carne', conversion_factor: 0.75 },
+    { id: 4, name: 'Papas', is_recipe: false, default_unit: 'g', category: 'Verdura', conversion_factor: 1.0 },
+    { id: 5, name: 'Fideos', is_recipe: false, default_unit: 'g', category: 'Pasta', conversion_factor: 2.25 },
+    { id: 6, name: 'Salsa de Tomate', is_recipe: false, default_unit: 'ml', category: 'Salsa', conversion_factor: 1.0 },
+    { id: 7, name: 'Carne Picada', is_recipe: false, default_unit: 'g', category: 'Carne', conversion_factor: 0.70 },
+    { id: 8, name: 'Leche', is_recipe: false, default_unit: 'ml', category: 'Lácteo', conversion_factor: 1.0 },
+    { id: 9, name: 'Manteca', is_recipe: false, default_unit: 'g', category: 'Lácteo', conversion_factor: 1.0 },
+    { id: 10, name: 'Huevo', is_recipe: false, default_unit: 'unidades', category: 'Proteína', conversion_factor: 0.90 },
+    { id: 11, name: 'Pan Rallado', is_recipe: false, default_unit: 'g', category: 'Otros', conversion_factor: 1.0 },
+    { id: 12, name: 'Cebolla', is_recipe: false, default_unit: 'unidades', category: 'Verdura', conversion_factor: 0.50 }
   ];
 };
 
@@ -55,6 +55,27 @@ export const CATEGORIES = [
   { name: 'Salsa', icon: '🥫' },
   { name: 'Otros', icon: '✨' }
 ];
+
+// Derived from mealdata.csv
+const COMMON_FACTORS = [
+  { regex: /pollo|chicken|ave/i, factor: 0.75 },
+  { regex: /vaca|carne|beef|steak|picada/i, factor: 0.70 },
+  { regex: /cerdo|pork/i, factor: 0.75 },
+  { regex: /pescado|salmon|merluza|fish/i, factor: 0.80 },
+  { regex: /arroz|rice|quinoa/i, factor: 3.00 },
+  { regex: /fideo|pasta|spaghetti|penne/i, factor: 2.25 },
+  { regex: /lenteja|poroto|legumbre|bean|lentil/i, factor: 2.20 },
+  { regex: /espinaca|kale|acelga/i, factor: 0.20 },
+  { regex: /hongo|champi/i, factor: 0.50 },
+  { regex: /papa|patata/i, factor: 1.00 },
+  { regex: /huevo|egg/i, factor: 0.90 },
+  { regex: /pan|galleta/i, factor: 1.00 }
+];
+
+export const getSuggestedFactor = (name) => {
+  const match = COMMON_FACTORS.find(f => f.regex.test(name));
+  return match ? match.factor : 1.0;
+};
 
 let MOCK_DB = getInitialData();
 
@@ -72,7 +93,8 @@ export const addFood = (food) => {
     instructions: food.instructions || '',
     default_unit: food.default_unit || (food.is_recipe ? 'unidades' : 'g'),
     category: food.category || 'Otros',
-    favorite: food.favorite || false
+    favorite: food.favorite || false,
+    conversion_factor: food.conversion_factor || 1.0
   };
   MOCK_DB.push(newFood);
   saveToLocal();
@@ -80,7 +102,7 @@ export const addFood = (food) => {
 };
 
 export const updateFood = (id, updatedFood) => {
-  MOCK_DB = MOCK_DB.map(f => f.id === id ? { ...f, ...updatedFood, id, instructions: updatedFood.instructions || '', favorite: updatedFood.favorite || false } : f);
+  MOCK_DB = MOCK_DB.map(f => f.id === id ? { ...f, ...updatedFood, id, instructions: updatedFood.instructions || '', favorite: updatedFood.favorite || false, conversion_factor: updatedFood.conversion_factor || 1.0 } : f);
   saveToLocal();
   return MOCK_DB.find(f => f.id === id);
 };
