@@ -38,11 +38,13 @@ function RecipeDetailModal({ item, options, onClose }) {
   );
 }
 
-function FoodSelectorModal({ options, onSelect, onClose }) {
+function FoodSelectorModal({ options, recentFoods = [], onSelect, onClose }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCat, setSelectedCat] = useState('Todas');
 
   const favorites = options.filter(o => o.favorite);
+  const recentItems = recentFoods.map(id => options.find(o => o.id === id)).filter(Boolean);
+
   const filteredOptions = options.filter(o => {
     const matchesSearch = o.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCat = selectedCat === 'Todas' || o.category === selectedCat;
@@ -56,7 +58,7 @@ function FoodSelectorModal({ options, onSelect, onClose }) {
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: 'var(--text-title)' }}>Seleccionar Alimento</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '5px' }}><X size={24} /></button>
         </div>
-        
+
         <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', overflow: 'hidden', gap: '10px' }}>
           <div style={{ position: 'relative' }}>
             <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -70,17 +72,33 @@ function FoodSelectorModal({ options, onSelect, onClose }) {
           </div>
 
           <div style={{ overflowY: 'auto', flex: 1 }}>
-            {searchTerm === '' && selectedCat === 'Todas' && favorites.length > 0 && (
-              <div style={{ marginBottom: '15px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#fbbf24', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}><Star size={12} fill="#fbbf24" /> Favoritos</div>
-                {favorites.map(food => (
-                  <div key={`fav-${food.id}`} onClick={() => onSelect(food)} style={{ padding: '10px', cursor: 'pointer', borderBottom: '1px solid var(--border-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(251, 191, 36, 0.05)', borderRadius: '8px', marginBottom: '4px' }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{food.name}</span>
-                    <button style={{ padding: '4px 8px', backgroundColor: '#fbbf24', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Elegir</button>
+            {searchTerm === '' && selectedCat === 'Todas' && (
+              <>
+                {favorites.length > 0 && (
+                  <div style={{ marginBottom: '15px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#fbbf24', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}><Star size={12} fill="#fbbf24" /> Favoritos</div>
+                    {favorites.map(food => (
+                      <div key={`fav-${food.id}`} onClick={() => onSelect(food)} style={{ padding: '10px', cursor: 'pointer', borderBottom: '1px solid var(--border-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(251, 191, 36, 0.05)', borderRadius: '8px', marginBottom: '4px' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{food.name}</span>
+                        <button style={{ padding: '4px 8px', backgroundColor: '#fbbf24', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Elegir</button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )}
+
+                {recentItems.length > 0 && (
+                  <div style={{ marginBottom: '15px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>🕒 Recientes</div>
+                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '5px' }}>
+                      {recentItems.map(food => (
+                        <button key={`recent-${food.id}`} onClick={() => onSelect(food)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-item)', color: 'var(--text-main)', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}>{food.name}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
+
 
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
               <thead>
