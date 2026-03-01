@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, X, Check, Database, Search, UtensilsCrossed, Tag } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, Database, Search, UtensilsCrossed, Tag, BookOpen } from 'lucide-react';
 import { addFood, updateFood, deleteFood, getFoods, CATEGORIES } from './mockDb';
 
 function RecipeIngredientEditor({ ingredients = [], allFoods = [], onUpdate }) {
@@ -105,7 +105,7 @@ export default function FoodManager({ onDatabaseChange }) {
   const [foods, setFoods] = useState(getFoods());
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros' });
+  const [formData, setFormData] = useState({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '' });
   const [showMainModal, setShowMainModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -122,7 +122,7 @@ export default function FoodManager({ onDatabaseChange }) {
     } else {
       addFood(formData);
     }
-    setFormData({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros' });
+    setFormData({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '' });
     setIsAdding(false);
     setEditingId(null);
     refresh();
@@ -135,7 +135,8 @@ export default function FoodManager({ onDatabaseChange }) {
       is_recipe: food.is_recipe, 
       default_unit: food.default_unit || 'g',
       ingredients: food.ingredients || [],
-      category: food.category || 'Otros'
+      category: food.category || 'Otros',
+      instructions: food.instructions || ''
     });
     setIsAdding(true);
   };
@@ -150,7 +151,7 @@ export default function FoodManager({ onDatabaseChange }) {
   const cancel = () => {
     setIsAdding(false);
     setEditingId(null);
-    setFormData({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros' });
+    setFormData({ name: '', is_recipe: false, default_unit: 'g', ingredients: [], category: 'Otros', instructions: '' });
   };
 
   const filteredFoods = foods.filter(f => 
@@ -229,7 +230,20 @@ export default function FoodManager({ onDatabaseChange }) {
                   </div>
 
                   {formData.is_recipe && (
-                    <RecipeIngredientEditor ingredients={formData.ingredients} allFoods={foods} onUpdate={(newIngs) => setFormData({ ...formData, ingredients: newIngs })} />
+                    <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <BookOpen size={14} /> Instrucciones de Preparación
+                        </span>
+                        <textarea 
+                          placeholder="Escribe los pasos para preparar esta receta..."
+                          value={formData.instructions}
+                          onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+                          style={{ width: '100%', height: '80px', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '14px', resize: 'none' }}
+                        />
+                      </div>
+                      <RecipeIngredientEditor ingredients={formData.ingredients} allFoods={foods} onUpdate={(newIngs) => setFormData({ ...formData, ingredients: newIngs })} />
+                    </div>
                   )}
                 </div>
               )}
@@ -260,8 +274,8 @@ export default function FoodManager({ onDatabaseChange }) {
                         </td>
                         <td style={{ padding: '12px 8px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => startEdit(food)} style={{ color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer' }}><Edit2 size={18}/></button>
-                            <button onClick={() => handleDelete(food.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18}/></button>
+                            <button onClick={() => startEdit(food)} style={{ color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}><Edit2 size={18}/></button>
+                            <button onClick={() => handleDelete(food.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}><Trash2 size={18}/></button>
                           </div>
                         </td>
                       </tr>

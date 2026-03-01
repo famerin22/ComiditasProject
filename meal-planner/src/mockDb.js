@@ -60,6 +60,7 @@ export const addFood = (food) => {
     ...food, 
     id: Date.now(), 
     ingredients: food.ingredients || [],
+    instructions: food.instructions || '',
     default_unit: food.default_unit || (food.is_recipe ? 'unidades' : 'g'),
     category: food.category || 'Otros'
   };
@@ -69,7 +70,7 @@ export const addFood = (food) => {
 };
 
 export const updateFood = (id, updatedFood) => {
-  MOCK_DB = MOCK_DB.map(f => f.id === id ? { ...f, ...updatedFood, id } : f);
+  MOCK_DB = MOCK_DB.map(f => f.id === id ? { ...f, ...updatedFood, id, instructions: updatedFood.instructions || '' } : f);
   saveToLocal();
   return MOCK_DB.find(f => f.id === id);
 };

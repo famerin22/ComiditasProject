@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { Plus, X, Check, Search, Copy, ArrowRight } from 'lucide-react';
 
+import { getFoods, CATEGORIES } from './mockDb';
+
 function FoodSelectorModal({ options, onSelect, onClose }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCat, setSelectedCat] = useState('Todas');
 
-  const filteredOptions = options.filter(o => 
-    o.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOptions = options.filter(o => {
+    const matchesSearch = o.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCat = selectedCat === 'Todas' || o.category === selectedCat;
+    return matchesSearch && matchesCat;
+  });
 
   return (
     <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '10px' }}>
@@ -18,8 +23,8 @@ function FoodSelectorModal({ options, onSelect, onClose }) {
           </button>
         </div>
         
-        <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ position: 'relative', marginBottom: '12px' }}>
+        <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', overflow: 'hidden', gap: '10px' }}>
+          <div style={{ position: 'relative' }}>
             <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input 
               type="text" 
@@ -28,6 +33,24 @@ function FoodSelectorModal({ options, onSelect, onClose }) {
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{ width: '100%', padding: '12px 12px 12px 35px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', fontSize: '16px', boxSizing: 'border-box' }}
             />
+          </div>
+
+          {/* FILTRO CATEGORÍAS */}
+          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '5px', whiteSpace: 'nowrap' }}>
+            {['Todas', ...CATEGORIES].map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCat(cat)}
+                style={{ 
+                  padding: '5px 12px', borderRadius: '15px', fontSize: '12px', border: '1px solid var(--border-color)',
+                  backgroundColor: selectedCat === cat ? '#6366f1' : 'var(--bg-item)',
+                  color: selectedCat === cat ? 'white' : 'var(--text-muted)',
+                  cursor: 'pointer', fontWeight: 'bold'
+                }}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
 
           <div style={{ overflowY: 'auto', flex: 1 }}>
