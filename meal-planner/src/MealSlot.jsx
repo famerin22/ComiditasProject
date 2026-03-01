@@ -77,7 +77,7 @@ function FoodSelectorModal({ options, onSelect, onClose }) {
 
 function QuantityModal({ food, onConfirm, onCancel }) {
   const [amount, setAmount] = useState('1');
-  const [unit, setUnit] = useState(food.is_recipe ? 'unidades' : '');
+  const [unit, setUnit] = useState(food.default_unit || (food.is_recipe ? 'unidades' : 'g'));
 
   return (
     <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '20px' }}>

@@ -12,24 +12,36 @@ const getInitialData = () => {
       id: 1, 
       name: 'Milanesas con Puré', 
       is_recipe: true, 
-      ingredients: [4, 9, 10, 11] // Papas, Manteca, Huevo, Pan Rallado
+      ingredients: [
+        { id: 4, amount: '500', unit: 'g' }, // Papas
+        { id: 9, amount: '50', unit: 'g' },  // Manteca
+        { id: 10, amount: '2', unit: 'unidades' }, // Huevo
+        { id: 11, amount: '200', unit: 'g' }  // Pan Rallado
+      ],
+      default_unit: 'unidades'
     },
     { 
       id: 2, 
       name: 'Fideos con Tuco', 
       is_recipe: true, 
-      ingredients: [5, 6, 7, 12] // Fideos, Salsa, Carne Picada, Cebolla
+      ingredients: [
+        { id: 5, amount: '250', unit: 'g' }, // Fideos
+        { id: 6, amount: '200', unit: 'ml' }, // Salsa
+        { id: 7, amount: '200', unit: 'g' }, // Carne Picada
+        { id: 12, amount: '1', unit: 'unidades' } // Cebolla
+      ],
+      default_unit: 'unidades'
     },
-    { id: 3, name: 'Pechuga de Pollo', is_recipe: false },
-    { id: 4, name: 'Papas', is_recipe: false },
-    { id: 5, name: 'Fideos', is_recipe: false },
-    { id: 6, name: 'Salsa de Tomate', is_recipe: false },
-    { id: 7, name: 'Carne Picada', is_recipe: false },
-    { id: 8, name: 'Leche', is_recipe: false },
-    { id: 9, name: 'Manteca', is_recipe: false },
-    { id: 10, name: 'Huevo', is_recipe: false },
-    { id: 11, name: 'Pan Rallado', is_recipe: false },
-    { id: 12, name: 'Cebolla', is_recipe: false }
+    { id: 3, name: 'Pechuga de Pollo', is_recipe: false, default_unit: 'g' },
+    { id: 4, name: 'Papas', is_recipe: false, default_unit: 'g' },
+    { id: 5, name: 'Fideos', is_recipe: false, default_unit: 'g' },
+    { id: 6, name: 'Salsa de Tomate', is_recipe: false, default_unit: 'ml' },
+    { id: 7, name: 'Carne Picada', is_recipe: false, default_unit: 'g' },
+    { id: 8, name: 'Leche', is_recipe: false, default_unit: 'ml' },
+    { id: 9, name: 'Manteca', is_recipe: false, default_unit: 'g' },
+    { id: 10, name: 'Huevo', is_recipe: false, default_unit: 'unidades' },
+    { id: 11, name: 'Pan Rallado', is_recipe: false, default_unit: 'g' },
+    { id: 12, name: 'Cebolla', is_recipe: false, default_unit: 'unidades' }
   ];
 };
 
@@ -42,7 +54,12 @@ const saveToLocal = () => {
 export const getFoods = () => [...MOCK_DB];
 
 export const addFood = (food) => {
-  const newFood = { ...food, id: Date.now(), ingredients: food.ingredients || [] };
+  const newFood = { 
+    ...food, 
+    id: Date.now(), 
+    ingredients: food.ingredients || [],
+    default_unit: food.default_unit || (food.is_recipe ? 'unidades' : 'g')
+  };
   MOCK_DB.push(newFood);
   saveToLocal();
   return newFood;

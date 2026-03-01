@@ -50,15 +50,18 @@ export default function App() {
 
     let newItem;
     if (food.is_recipe) {
-      const ingredientNames = (food.ingredients || [])
-        .map(id => dbOptions.find(f => f.id === id)?.name)
+      const ingredientDetails = (food.ingredients || [])
+        .map(ing => {
+          const detail = dbOptions.find(f => f.id === ing.id);
+          return detail ? `${detail.name} (${ing.amount}${ing.unit})` : null;
+        })
         .filter(Boolean);
       
       newItem = {
         id: Date.now(), // eslint-disable-line react-hooks/purity
         type: 'recipe',
         name: food.name,
-        ingredients: ingredientNames,
+        ingredients: ingredientDetails,
         amount,
         unit
       };
