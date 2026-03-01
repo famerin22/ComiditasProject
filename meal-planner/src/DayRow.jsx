@@ -2,7 +2,9 @@ import React from 'react';
 import MealSlot from './MealSlot';
 import { Coffee, Utensils, Cookie, Moon, Trash2 } from 'lucide-react';
 
-export default function DayRow({ day, isToday, data, options, onAddItem, onRemoveItem, onUpdateItem, onCopyMeal, onCopyToTomorrow, onClearDay }) {
+export default function DayRow({ day, isToday, data, options, onAddItem, onRemoveItem, onUpdateItem, onCopyMeal, onCopyToTomorrow, onClearDay, recentFoods }) {
+  if (!data) return null;
+
   return (
     <div style={{ 
       background: isToday ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-card)', 
@@ -40,6 +42,7 @@ export default function DayRow({ day, isToday, data, options, onAddItem, onRemov
             onUpdateItem={(id, amount, unit) => onUpdateItem('desayuno', id, amount, unit)}
             onCopyAll={() => onCopyMeal(day, 'desayuno')}
             onCopyToTomorrow={() => onCopyToTomorrow(day, 'desayuno')}
+            recentFoods={recentFoods}
           />
           <MealSlot 
             label={<><Utensils size={14} /> Almuerzo</>}
@@ -50,6 +53,7 @@ export default function DayRow({ day, isToday, data, options, onAddItem, onRemov
             onUpdateItem={(id, amount, unit) => onUpdateItem('almuerzo', id, amount, unit)}
             onCopyAll={() => onCopyMeal(day, 'almuerzo')}
             onCopyToTomorrow={() => onCopyToTomorrow(day, 'almuerzo')}
+            recentFoods={recentFoods}
           />
         </div>
 
@@ -63,6 +67,7 @@ export default function DayRow({ day, isToday, data, options, onAddItem, onRemov
             onUpdateItem={(id, amount, unit) => onUpdateItem('merienda', id, amount, unit)}
             onCopyAll={() => onCopyMeal(day, 'merienda')}
             onCopyToTomorrow={() => onCopyToTomorrow(day, 'merienda')}
+            recentFoods={recentFoods}
           />
           <MealSlot 
             label={<><Moon size={14} /> Cena</>}
@@ -73,6 +78,7 @@ export default function DayRow({ day, isToday, data, options, onAddItem, onRemov
             onUpdateItem={(id, amount, unit) => onUpdateItem('cena', id, amount, unit)}
             onCopyAll={() => onCopyMeal(day, 'cena')}
             onCopyToTomorrow={() => onCopyToTomorrow(day, 'cena')}
+            recentFoods={recentFoods}
           />
         </div>
       </div>

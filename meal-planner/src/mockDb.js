@@ -45,7 +45,16 @@ const getInitialData = () => {
   ];
 };
 
-export const CATEGORIES = ['Proteína', 'Carne', 'Pasta', 'Verdura', 'Legumbres', 'Lácteo', 'Salsa', 'Otros'];
+export const CATEGORIES = [
+  { name: 'Proteína', icon: '🍗' },
+  { name: 'Carne', icon: '🥩' },
+  { name: 'Pasta', icon: '🍝' },
+  { name: 'Verdura', icon: '🥦' },
+  { name: 'Legumbres', icon: '🫘' },
+  { name: 'Lácteo', icon: '🥛' },
+  { name: 'Salsa', icon: '🥫' },
+  { name: 'Otros', icon: '✨' }
+];
 
 let MOCK_DB = getInitialData();
 
@@ -100,18 +109,22 @@ export const getSchedule = (defaultSchedule) => {
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      // Safeguard: Ensure all users and days have all 4 meal slots
-      ['fer', 'meli'].forEach(person => {
-        if (parsed[person]) {
-          Object.keys(parsed[person]).forEach(day => {
+      // Safeguard: Ensure all users, days, and meals from default exist
+      Object.keys(defaultSchedule).forEach(person => {
+        if (!parsed[person]) parsed[person] = defaultSchedule[person];
+        
+        Object.keys(defaultSchedule[person]).forEach(day => {
+          if (!parsed[person][day]) {
+            parsed[person][day] = defaultSchedule[person][day];
+          } else {
             const meals = ['desayuno', 'almuerzo', 'merienda', 'cena'];
             meals.forEach(meal => {
               if (!parsed[person][day][meal]) {
                 parsed[person][day][meal] = [];
               }
             });
-          });
-        }
+          }
+        });
       });
       return parsed;
     } catch {
