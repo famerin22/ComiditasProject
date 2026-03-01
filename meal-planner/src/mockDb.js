@@ -1,13 +1,6 @@
 const getInitialData = () => {
   const saved = localStorage.getItem('meal_planner_db');
-  if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch (e) {
-      console.error("Error parsing local database", e);
-    }
-  }
-  return [
+  const defaults = [
     { 
       id: 1, 
       name: 'Milanesas con Puré', 
@@ -43,6 +36,27 @@ const getInitialData = () => {
     { id: 11, name: 'Pan Rallado', is_recipe: false, default_unit: 'g', category: 'Otros', conversion_factor: 1.0 },
     { id: 12, name: 'Cebolla', is_recipe: false, default_unit: 'unidades', category: 'Verdura', conversion_factor: 0.50 }
   ];
+
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      // Migration: Ensure all existing foods have the new factors
+      return parsed.map(food => {
+        const def = defaults.find(d => d.name === food.name);
+        if (def && (!food.conversion_factor || food.conversion_factor === 1)) {
+          return { ...food, conversion_factor: def.conversion_factor };
+        }
+        // If not in defaults but lacks factor, try suggesting one
+        if (!food.conversion_factor || food.conversion_factor === 1) {
+          return { ...food, conversion_factor: getSuggestedFactor(food.name) };
+        }
+        return food;
+      });
+    } catch (e) {
+      console.error("Error parsing local database", e);
+    }
+  }
+  return defaults;
 };
 
 export const CATEGORIES = [
