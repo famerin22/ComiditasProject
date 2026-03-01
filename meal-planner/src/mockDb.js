@@ -32,18 +32,20 @@ const getInitialData = () => {
       ],
       default_unit: 'unidades'
     },
-    { id: 3, name: 'Pechuga de Pollo', is_recipe: false, default_unit: 'g' },
-    { id: 4, name: 'Papas', is_recipe: false, default_unit: 'g' },
-    { id: 5, name: 'Fideos', is_recipe: false, default_unit: 'g' },
-    { id: 6, name: 'Salsa de Tomate', is_recipe: false, default_unit: 'ml' },
-    { id: 7, name: 'Carne Picada', is_recipe: false, default_unit: 'g' },
-    { id: 8, name: 'Leche', is_recipe: false, default_unit: 'ml' },
-    { id: 9, name: 'Manteca', is_recipe: false, default_unit: 'g' },
-    { id: 10, name: 'Huevo', is_recipe: false, default_unit: 'unidades' },
-    { id: 11, name: 'Pan Rallado', is_recipe: false, default_unit: 'g' },
-    { id: 12, name: 'Cebolla', is_recipe: false, default_unit: 'unidades' }
+    { id: 3, name: 'Pechuga de Pollo', is_recipe: false, default_unit: 'g', category: 'Carne' },
+    { id: 4, name: 'Papas', is_recipe: false, default_unit: 'g', category: 'Verdura' },
+    { id: 5, name: 'Fideos', is_recipe: false, default_unit: 'g', category: 'Pasta' },
+    { id: 6, name: 'Salsa de Tomate', is_recipe: false, default_unit: 'ml', category: 'Salsa' },
+    { id: 7, name: 'Carne Picada', is_recipe: false, default_unit: 'g', category: 'Carne' },
+    { id: 8, name: 'Leche', is_recipe: false, default_unit: 'ml', category: 'Lácteo' },
+    { id: 9, name: 'Manteca', is_recipe: false, default_unit: 'g', category: 'Lácteo' },
+    { id: 10, name: 'Huevo', is_recipe: false, default_unit: 'unidades', category: 'Proteína' },
+    { id: 11, name: 'Pan Rallado', is_recipe: false, default_unit: 'g', category: 'Otros' },
+    { id: 12, name: 'Cebolla', is_recipe: false, default_unit: 'unidades', category: 'Verdura' }
   ];
 };
+
+export const CATEGORIES = ['Proteína', 'Carne', 'Pasta', 'Verdura', 'Legumbres', 'Lácteo', 'Salsa', 'Otros'];
 
 let MOCK_DB = getInitialData();
 
@@ -58,7 +60,8 @@ export const addFood = (food) => {
     ...food, 
     id: Date.now(), 
     ingredients: food.ingredients || [],
-    default_unit: food.default_unit || (food.is_recipe ? 'unidades' : 'g')
+    default_unit: food.default_unit || (food.is_recipe ? 'unidades' : 'g'),
+    category: food.category || 'Otros'
   };
   MOCK_DB.push(newFood);
   saveToLocal();
