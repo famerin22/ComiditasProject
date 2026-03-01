@@ -2,7 +2,7 @@ import React from 'react';
 import MealSlot from './MealSlot';
 import { Coffee, Utensils, Cookie, Moon } from 'lucide-react';
 
-export default function DayRow({ day, isToday, data, options, onAddItem, onRemoveItem, onCopyMeal, onCopyToTomorrow }) {
+export default function DayRow({ day, isToday, data, options, onAddItem, onRemoveItem, onUpdateItem, onCopyMeal, onCopyToTomorrow }) {
   return (
     <div style={{ 
       background: isToday ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-card)', 
@@ -30,6 +30,7 @@ export default function DayRow({ day, isToday, data, options, onAddItem, onRemov
             options={options}
             onAddItem={(id, amount, unit) => onAddItem('desayuno', id, amount, unit)}
             onRemoveItem={(id) => onRemoveItem('desayuno', id)}
+            onUpdateItem={(id, amount, unit) => onUpdateItem('desayuno', id, amount, unit)}
             onCopyAll={() => onCopyMeal(day, 'desayuno')}
             onCopyToTomorrow={() => onCopyToTomorrow(day, 'desayuno')}
           />
@@ -39,6 +40,7 @@ export default function DayRow({ day, isToday, data, options, onAddItem, onRemov
             options={options}
             onAddItem={(id, amount, unit) => onAddItem('almuerzo', id, amount, unit)}
             onRemoveItem={(id) => onRemoveItem('almuerzo', id)}
+            onUpdateItem={(id, amount, unit) => onUpdateItem('almuerzo', id, amount, unit)}
             onCopyAll={() => onCopyMeal(day, 'almuerzo')}
             onCopyToTomorrow={() => onCopyToTomorrow(day, 'almuerzo')}
           />
@@ -51,6 +53,7 @@ export default function DayRow({ day, isToday, data, options, onAddItem, onRemov
             options={options}
             onAddItem={(id, amount, unit) => onAddItem('merienda', id, amount, unit)}
             onRemoveItem={(id) => onRemoveItem('merienda', id)}
+            onUpdateItem={(id, amount, unit) => onUpdateItem('merienda', id, amount, unit)}
             onCopyAll={() => onCopyMeal(day, 'merienda')}
             onCopyToTomorrow={() => onCopyToTomorrow(day, 'merienda')}
           />
@@ -60,6 +63,7 @@ export default function DayRow({ day, isToday, data, options, onAddItem, onRemov
             options={options}
             onAddItem={(id, amount, unit) => onAddItem('cena', id, amount, unit)}
             onRemoveItem={(id) => onRemoveItem('cena', id)}
+            onUpdateItem={(id, amount, unit) => onUpdateItem('cena', id, amount, unit)}
             onCopyAll={() => onCopyMeal(day, 'cena')}
             onCopyToTomorrow={() => onCopyToTomorrow(day, 'cena')}
           />
@@ -68,5 +72,4 @@ export default function DayRow({ day, isToday, data, options, onAddItem, onRemov
     </div>
   );
 }
-
 }

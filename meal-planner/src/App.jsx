@@ -234,6 +234,7 @@ export default function App() {
       id: Date.now(),
       type: food.is_recipe ? 'recipe' : 'ingredient',
       name: food.name,
+      category: food.category || 'Otros',
       amount,
       unit,
       ingredients: food.is_recipe ? (food.ingredients || []).map(ing => {
@@ -242,6 +243,21 @@ export default function App() {
       }).filter(Boolean) : []
     };
     setSchedules(prev => ({...prev, [person]: { ...prev[person], [day]: { ...prev[person][day], [time]: [...prev[person][day][time], newItem] }}}));
+  };
+
+  const handleUpdateItem = (person, day, time, itemId, amount, unit) => {
+    setSchedules(prev => ({
+      ...prev,
+      [person]: {
+        ...prev[person],
+        [day]: {
+          ...prev[person][day],
+          [time]: prev[person][day][time].map(item => 
+            item.id === itemId ? { ...item, amount, unit } : item
+          )
+        }
+      }
+    }));
   };
 
   const handleRemoveItem = (person, day, time, itemId) => {
@@ -332,7 +348,7 @@ export default function App() {
       </div>
 
       <div style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
-        {DAYS.map(day => <DayRow key={day} day={day} isToday={day === todayName} data={schedules[activeUser][day]} options={dbOptions} onAddItem={(time, foodId, amount, unit) => handleAddItem(activeUser, day, time, foodId, amount, unit)} onRemoveItem={(time, itemId) => handleRemoveItem(activeUser, day, time, itemId)} onCopyMeal={handleCopyMeal} onCopyToTomorrow={handleCopyToTomorrow} />)}
+        {DAYS.map(day => <DayRow key={day} day={day} isToday={day === todayName} data={schedules[activeUser][day]} options={dbOptions} onAddItem={(time, foodId, amount, unit) => handleAddItem(activeUser, day, time, foodId, amount, unit)} onRemoveItem={(time, itemId) => handleRemoveItem(activeUser, day, time, itemId)} onUpdateItem={(time, id, amount, unit) => handleUpdateItem(activeUser, day, time, id, amount, unit)} onCopyMeal={handleCopyMeal} onCopyToTomorrow={handleCopyToTomorrow} />)}
       </div>
     </div>
   );

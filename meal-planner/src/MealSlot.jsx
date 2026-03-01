@@ -145,9 +145,21 @@ function QuantityModal({ food, onConfirm, onCancel }) {
   );
 }
 
-export default function MealSlot({ label, items = [], options = [], onAddItem, onRemoveItem, onCopyAll, onCopyToTomorrow }) {
+const CATEGORY_COLORS = {
+  'Proteína': '#f87171',
+  'Carne': '#ef4444',
+  'Pasta': '#fbbf24',
+  'Verdura': '#34d399',
+  'Legumbres': '#60a5fa',
+  'Lácteo': '#a78bfa',
+  'Salsa': '#f472b6',
+  'Otros': '#94a3b8'
+};
+
+export default function MealSlot({ label, items = [], options = [], onAddItem, onRemoveItem, onUpdateItem, onCopyAll, onCopyToTomorrow }) {
   const [showFoodModal, setShowFoodModal] = useState(false);
   const [selectedFoodForQty, setSelectedFoodForQty] = useState(null);
+  const [editingItem, setEditingId] = useState(null);
 
   const handleSelectFood = (food) => {
     setSelectedFoodForQty(food);
@@ -155,14 +167,24 @@ export default function MealSlot({ label, items = [], options = [], onAddItem, o
   };
 
   const handleConfirmQty = (amount, unit) => {
-    if (selectedFoodForQty) {
+    if (editingItem) {
+      onUpdateItem(editingItem.id, amount, unit);
+      setEditingId(null);
+    } else if (selectedFoodForQty) {
       onAddItem(selectedFoodForQty.id, amount, unit);
       setSelectedFoodForQty(null);
     }
   };
 
+  const startEdit = (item) => {
+    const foodDef = options.find(o => o.name === item.name);
+    setEditingId(item);
+    setSelectedFoodForQty({ ...item, is_recipe: item.type === 'recipe', default_unit: item.unit });
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
+      {/* ... (keep header the same) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginLeft: 4, display: 'flex', alignItems: 'center', gap: '4px' }}>
           {label}
@@ -170,75 +192,53 @@ export default function MealSlot({ label, items = [], options = [], onAddItem, o
         <div style={{ display: 'flex', gap: '4px' }}>
           {items.length > 0 && (
             <>
-              <button 
-                onClick={onCopyToTomorrow}
-                title="Copiar a mañana"
-                style={{ padding: '2px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              >
-                <ArrowRight size={14} />
-              </button>
-              <button 
-                onClick={onCopyAll}
-                title="Copiar al otro usuario"
-                style={{ padding: '2px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              >
-                <Copy size={14} />
-              </button>
+              <button onClick={onCopyToTomorrow} title="Copiar a mañana" style={{ padding: '2px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><ArrowRight size={14} /></button>
+              <button onClick={onCopyAll} title="Copiar al otro usuario" style={{ padding: '2px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><Copy size={14} /></button>
             </>
           )}
-          <button 
-            onClick={() => setShowFoodModal(true)}
-            style={{ padding: '2px', background: 'none', border: 'none', color: '#6366f1', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-          >
-            <Plus size={16} />
-          </button>
+          <button onClick={() => setShowFoodModal(true)} style={{ padding: '2px', background: 'none', border: 'none', color: '#6366f1', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><Plus size={16} /></button>
         </div>
       </div>
 
-      {showFoodModal && (
-        <FoodSelectorModal 
-          options={options} 
-          onSelect={handleSelectFood} 
-          onClose={() => setShowFoodModal(false)} 
-        />
-      )}
+      {showFoodModal && <FoodSelectorModal options={options} onSelect={handleSelectFood} onClose={() => setShowFoodModal(false)} />}
 
       {selectedFoodForQty && (
         <QuantityModal 
           food={selectedFoodForQty}
+          initialAmount={editingItem ? editingItem.amount : '1'}
+          initialUnit={editingItem ? editingItem.unit : (selectedFoodForQty.default_unit || 'g')}
           onConfirm={handleConfirmQty}
-          onCancel={() => setSelectedFoodForQty(null)}
+          onCancel={() => { setSelectedFoodForQty(null); setEditingId(null); }}
         />
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {items.map(item => (
-          <div key={item.id} style={{ position: 'relative', padding: '8px', border: '1px solid var(--border-card)', borderRadius: '6px', backgroundColor: 'var(--bg-item)' }}>
+          <div key={item.id} style={{ 
+            position: 'relative', padding: '8px', 
+            border: '1px solid var(--border-card)', 
+            borderLeft: `4px solid ${CATEGORY_COLORS[item.category] || CATEGORY_COLORS['Otros']}`,
+            borderRadius: '6px', backgroundColor: 'var(--bg-item)',
+            cursor: 'pointer'
+          }} onClick={() => startEdit(item)}>
             <button 
-              onClick={() => onRemoveItem(item.id)}
+              onClick={(e) => { e.stopPropagation(); onRemoveItem(item.id); }}
               style={{ position: 'absolute', top: '4px', right: '4px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0 }}
             >
               <X size={12} />
             </button>
 
-            {item.type === 'recipe' ? (
-              <div>
-                <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-title)', marginBottom: '4px', borderBottom: '1px solid var(--border-card)', paddingBottom: '2px', display: 'flex', justifyContent: 'space-between', paddingRight: '15px' }}>
-                  <span>{item.name}</span>
-                  <span style={{ color: 'var(--text-muted)', fontWeight: 'normal' }}>{item.amount} {item.unit}</span>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                  {item.ingredients.map((ing, idx) => (
-                    <span key={idx} style={{ fontSize: '10px', background: 'var(--bg-tag)', color: 'var(--text-tag)', padding: '2px 6px', borderRadius: '10px' }}>
-                      {ing}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: '12px', color: 'var(--text-main)', display: 'flex', justifyContent: 'space-between', paddingRight: '15px' }}>
-                <span>{item.name}</span>
-                <span style={{ color: 'var(--text-muted)' }}>{item.amount} {item.unit}</span>
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-title)', marginBottom: '2px', paddingRight: '15px', display: 'flex', justifyContent: 'space-between' }}>
+              <span>{item.name}</span>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 'normal', fontSize: '11px' }}>{item.amount}{item.unit}</span>
+            </div>
+            {item.type === 'recipe' && item.ingredients && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '4px' }}>
+                {item.ingredients.map((ing, idx) => (
+                  <span key={idx} style={{ fontSize: '9px', background: 'var(--bg-tag)', color: 'var(--text-tag)', padding: '1px 5px', borderRadius: '8px' }}>
+                    {ing}
+                  </span>
+                ))}
               </div>
             )}
           </div>
